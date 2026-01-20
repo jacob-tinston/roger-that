@@ -14,13 +14,13 @@ import { email } from '@/routes/password';
 export default function ForgotPassword({ status }: { status?: string }) {
     return (
         <AuthLayout
-            title="Forgot password"
+            title="Forgot Password"
             description="Enter your email to receive a password reset link"
         >
-            <Head title="Forgot password" />
+            <Head title="Forgot Password" />
 
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <div className="mb-4 text-center text-sm font-medium text-emerald-600 font-body">
                     {status}
                 </div>
             )}
@@ -45,6 +45,8 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
                             <div className="my-6 flex items-center justify-start">
                                 <Button
+                                    variant="coral"
+                                    size="xl"
                                     className="w-full"
                                     disabled={processing}
                                     data-test="email-password-reset-link-button"
@@ -59,9 +61,11 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     )}
                 </Form>
 
-                <div className="space-x-1 text-center text-sm text-muted-foreground">
+                <div className="space-x-1 text-center text-sm text-slate-500 font-body">
                     <span>Or, return to</span>
-                    <TextLink href={login()}>log in</TextLink>
+                    <TextLink href={login()} className="text-coral hover:text-coral/90">
+                        log in
+                    </TextLink>
                 </div>
             </div>
         </AuthLayout>

@@ -13,10 +13,10 @@ import { store } from '@/routes/register';
 export default function Register() {
     return (
         <AuthLayout
-            title="Create an account"
+            title="Sign Up"
             description="Enter your details below to create your account"
         >
-            <Head title="Register" />
+            <Head title="Sign Up" />
             <Form
                 {...store.form()}
                 resetOnSuccess={['password', 'password_confirmation']}
@@ -92,6 +92,8 @@ export default function Register() {
 
                             <Button
                                 type="submit"
+                                variant="coral"
+                                size="xl"
                                 className="mt-2 w-full"
                                 tabIndex={5}
                                 data-test="register-user-button"
@@ -101,9 +103,9 @@ export default function Register() {
                             </Button>
                         </div>
 
-                        <div className="text-center text-sm text-muted-foreground">
+                        <div className="text-center text-sm text-slate-500 font-body">
                             Already have an account?{' '}
-                            <TextLink href={login()} tabIndex={6}>
+                            <TextLink href={login()} tabIndex={6} className="text-coral hover:text-coral/90">
                                 Log in
                             </TextLink>
                         </div>

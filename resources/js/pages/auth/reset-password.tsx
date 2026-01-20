@@ -16,10 +16,10 @@ interface ResetPasswordProps {
 export default function ResetPassword({ token, email }: ResetPasswordProps) {
     return (
         <AuthLayout
-            title="Reset password"
+            title="Reset Password"
             description="Please enter your new password below"
         >
-            <Head title="Reset password" />
+            <Head title="Reset Password" />
 
             <Form
                 {...update.form()}
@@ -36,8 +36,8 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                                 name="email"
                                 autoComplete="email"
                                 value={email}
-                                className="mt-1 block w-full"
                                 readOnly
+                                className="mt-1 block"
                             />
                             <InputError
                                 message={errors.email}
@@ -52,9 +52,9 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                                 type="password"
                                 name="password"
                                 autoComplete="new-password"
-                                className="mt-1 block w-full"
                                 autoFocus
                                 placeholder="Password"
+                                className="mt-1 block"
                             />
                             <InputError message={errors.password} />
                         </div>
@@ -68,8 +68,8 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                                 type="password"
                                 name="password_confirmation"
                                 autoComplete="new-password"
-                                className="mt-1 block w-full"
                                 placeholder="Confirm password"
+                                className="mt-1 block"
                             />
                             <InputError
                                 message={errors.password_confirmation}
@@ -79,6 +79,8 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
 
                         <Button
                             type="submit"
+                            variant="coral"
+                            size="xl"
                             className="mt-4 w-full"
                             disabled={processing}
                             data-test="reset-password-button"

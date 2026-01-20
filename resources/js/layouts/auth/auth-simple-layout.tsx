@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
 import { type PropsWithChildren } from 'react';
 
-import AppLogoIcon from '@/components/app-logo-icon';
 import { home } from '@/routes';
 
 interface AuthLayoutProps {
@@ -24,27 +24,24 @@ export default function AuthSimpleLayout({
                     rel="stylesheet"
                 />
             </Head>
-            <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-eggplant-pattern p-6 md:p-10">
-                <div className="w-full max-w-sm">
+            <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-eggplant-pattern p-4 md:p-10">
+                <div className="w-full max-w-lg">
                     <div className="bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-8 md:p-10 relative overflow-hidden transition-all duration-300">
+                        <Link
+                            href={home().url}
+                            className="absolute top-4 left-4 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
+                            aria-label="Back to game"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </Link>
                         <div className="flex flex-col gap-8">
-                            <div className="flex flex-col items-center gap-4">
-                                <Link
-                                    href={home()}
-                                    className="flex flex-col items-center gap-2 font-medium"
-                                >
-                                    <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-md">
-                                        <AppLogoIcon className="size-9 fill-current text-[var(--foreground)] dark:text-white" />
-                                    </div>
-                                    <span className="sr-only">{title}</span>
-                                </Link>
-
-                                <div className="space-y-2 text-center">
-                                    <h1 className="font-display text-2xl md:text-3xl font-black text-slate-900 tracking-tight">{title}</h1>
-                                    <p className="text-center text-sm text-slate-500 font-body">
-                                        {description}
-                                    </p>
-                                </div>
+                            <div className="text-center">
+                                <h1 className="font-display text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
+                                    {title}
+                                </h1>
+                                <p className="mt-2 text-slate-500 font-body text-sm md:text-base italic">
+                                    {description}
+                                </p>
                             </div>
                             {children}
                         </div>

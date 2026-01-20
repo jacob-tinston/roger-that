@@ -25,10 +25,10 @@ export default function Login({
 }: LoginProps) {
     return (
         <AuthLayout
-            title="Log in to your account"
+            title="Log In"
             description="Enter your email and password below to log in"
         >
-            <Head title="Log in" />
+            <Head title="Log In" />
 
             <Form
                 {...store.form()}
@@ -49,7 +49,6 @@ export default function Login({
                                     tabIndex={1}
                                     autoComplete="email"
                                     placeholder="email@example.com"
-                                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border-2 border-slate-100 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-coral focus:ring-2 focus:ring-coral/20 transition-all duration-200 font-body"
                                 />
                                 <InputError message={errors.email} />
                             </div>
@@ -75,7 +74,6 @@ export default function Login({
                                     tabIndex={2}
                                     autoComplete="current-password"
                                     placeholder="Password"
-                                    className="w-full px-4 py-3 rounded-xl bg-slate-50 border-2 border-slate-100 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-coral focus:ring-2 focus:ring-coral/20 transition-all duration-200 font-body"
                                 />
                                 <InputError message={errors.password} />
                             </div>
@@ -91,7 +89,9 @@ export default function Login({
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full px-6 py-3 rounded-xl font-display font-bold text-white bg-coral hover:bg-coral/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-coral focus:ring-offset-2"
+                                variant="coral"
+                                size="xl"
+                                className="mt-4 w-full"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"

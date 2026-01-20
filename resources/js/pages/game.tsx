@@ -5,7 +5,7 @@ import { RogerThatGame } from '@/components/roger-that-game';
 export default function Game() {
     return (
         <>
-            <Head title="Roger That">
+            <Head title="The game of who Rogered who">
                 <link rel="preconnect" href="https://fonts.bunny.net" />
                 <link
                     href="https://fonts.bunny.net/css?family=poppins:400,600,700,800,900&family=inter:400,500,600"

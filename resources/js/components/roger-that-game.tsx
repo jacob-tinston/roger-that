@@ -1,7 +1,11 @@
+import { Link, usePage } from "@inertiajs/react"
 import { useState, useEffect } from "react"
-import { HelpCircle } from "lucide-react"
+import { HelpCircle, User } from "lucide-react"
+import { login, logout } from "@/routes"
+import { type SharedData } from "@/types"
 import { CelebrityCard } from "./celebrity-card"
 import { GuessInput } from "./guess-input"
+import { Button } from "./ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog"
 import { cn } from "@/lib/utils"
 
@@ -46,6 +50,10 @@ export function RogerThatGame() {
   const [gameState, setGameState] = useState<GameState>("playing")
   const [matchedCards, setMatchedCards] = useState<number[]>([])
   const [showHelp, setShowHelp] = useState(false)
+  const [showAccount, setShowAccount] = useState(false)
+
+  const { auth } = usePage<SharedData>().props
+  const user = auth?.user
 
   useEffect(() => {
     setSubtitle(SUBTITLES[Math.floor(Math.random() * SUBTITLES.length)])
@@ -86,11 +94,30 @@ export function RogerThatGame() {
         {/* Help Icon */}
         <button
           onClick={() => setShowHelp(true)}
-          className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
+          className="absolute top-4 left-4 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
           aria-label="How to play"
         >
           <HelpCircle className="w-5 h-5" />
         </button>
+
+        {/* Account Icon */}
+        {user ? (
+          <button
+            onClick={() => setShowAccount(true)}
+            className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
+            aria-label="Account"
+          >
+            <User className="w-5 h-5" />
+          </button>
+        ) : (
+          <Link
+            href={login().url}
+            className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
+            aria-label="Log in"
+          >
+            <User className="w-5 h-5" />
+          </Link>
+        )}
 
         {/* Header */}
         <div className="text-center mb-8">
@@ -202,6 +229,52 @@ export function RogerThatGame() {
           </DialogHeader>
         </DialogContent>
       </Dialog>
+
+      {/* Account Dialog */}
+      {user && (
+        <Dialog open={showAccount} onOpenChange={setShowAccount}>
+          <DialogContent className="sm:max-w-lg bg-white rounded-3xl p-8 md:p-10 border-slate-200 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]">
+            <DialogHeader>
+              <DialogTitle className="font-display text-2xl md:text-3xl font-black text-slate-900 tracking-tight text-center">
+                My Account
+              </DialogTitle>
+              <DialogDescription asChild>
+                <div className="mt-4">
+                  <div className="flex gap-6 items-start">
+                    <div className="flex-1 space-y-4 text-left min-w-0">
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wider text-slate-400 font-body">Name</p>
+                        <p className="mt-1 text-slate-900 font-body">{user.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wider text-slate-400 font-body">Email</p>
+                        <p className="mt-1 text-slate-900 font-body">{user.email}</p>
+                      </div>
+                    </div>
+                    <div className="shrink-0 w-24 h-24 rounded-full bg-gradient-to-br from-coral/20 to-coral/40 flex items-center justify-center">
+                      <span className="text-3xl font-display font-bold text-coral/80">
+                        {user.name
+                          .split(/\s+/)
+                          .map((s) => s[0])
+                          .join("")
+                          .toUpperCase()
+                          .slice(0, 2) || "?"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="pt-6 mt-6 border-t border-slate-200">
+                    <Button variant="coral" size="xl" asChild className="w-full">
+                      <Link href={logout().url} method="post" as="button">
+                        Log out
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

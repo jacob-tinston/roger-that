@@ -74,9 +74,10 @@ export default function TwoFactor({
                                     {({ processing }) => (
                                         <Button
                                             variant="destructive"
+                                            size="xl"
                                             type="submit"
                                             disabled={processing}
-                                            className="px-6 py-3 rounded-xl font-display font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                            className="rounded-xl font-display font-bold"
                                         >
                                             <ShieldBan /> Disable 2FA
                                         </Button>
@@ -97,8 +98,9 @@ export default function TwoFactor({
                             <div>
                                 {hasSetupData ? (
                                     <Button
+                                        variant="coral"
+                                        size="xl"
                                         onClick={() => setShowSetupModal(true)}
-                                        className="px-6 py-3 rounded-xl font-display font-bold text-white bg-coral hover:bg-coral/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-coral focus:ring-offset-2"
                                     >
                                         <ShieldCheck />
                                         Continue Setup
@@ -112,9 +114,10 @@ export default function TwoFactor({
                                     >
                                         {({ processing }) => (
                                             <Button
+                                                variant="coral"
+                                                size="xl"
                                                 type="submit"
                                                 disabled={processing}
-                                                className="px-6 py-3 rounded-xl font-display font-bold text-white bg-coral hover:bg-coral/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-coral focus:ring-offset-2"
                                             >
                                                 <ShieldCheck />
                                                 Enable 2FA
