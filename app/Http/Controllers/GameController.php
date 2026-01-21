@@ -12,19 +12,31 @@ use Inertia\Response;
 class GameController extends Controller
 {
     /**
-     * Show the daily game. Ensures today's game exists, passes subjects to the frontend (answer is never sent).
+     * Show the daily game. Ensures today's game exists when no date given; for a specific date, 404 if missing.
+     * Passes subjects to the frontend (answer is never sent) and previousGameUrl when an earlier game exists.
      */
-    public function index(): Response|JsonResponse
+    public function index(?string $date = null): Response|JsonResponse
     {
-        $game = DailyGame::whereDate('game_date', today())
+        $isToday = $date === null;
+        $gameDate = $isToday ? today() : \Carbon\Carbon::parse($date)->startOfDay();
+
+        if ($gameDate->isFuture()) {
+            abort(404);
+        }
+
+        $game = DailyGame::whereDate('game_date', $gameDate)
             ->with('subjects')
             ->first();
 
         if (! $game) {
-            (new CreateDailyGame)->handle();
-            $game = DailyGame::whereDate('game_date', today())
-                ->with('subjects')
-                ->firstOrFail();
+            if ($isToday) {
+                (new CreateDailyGame)->handle();
+                $game = DailyGame::whereDate('game_date', today())
+                    ->with('subjects')
+                    ->firstOrFail();
+            } else {
+                abort(404);
+            }
         }
 
         $subjects = $game->subjects->map(fn ($s) => [
@@ -32,31 +44,47 @@ class GameController extends Controller
             'name' => $s->name,
             'year' => $s->birth_year,
             'hint' => $s->tagline ?? '',
+            'photo_url' => $s->photo_url,
         ]);
+
+        $previous = DailyGame::where('game_date', '<', $game->game_date)
+            ->orderByDesc('game_date')
+            ->first();
+
+        $previousGameUrl = $previous
+            ? route('game', ['date' => $previous->game_date->format('Y-m-d')])
+            : null;
 
         return Inertia::render('game', [
             'subjects' => $subjects->values()->all(),
             'gameDate' => $game->game_date->toDateString(),
             'guessUrl' => route('game.guess'),
+            'previousGameUrl' => $previousGameUrl,
         ]);
     }
 
     /**
      * Check a guess. Answer is only returned when correct or when the game is over (last guess was wrong).
+     * Accepts optional game_date for historical games; defaults to today when omitted.
      */
     public function guess(Request $request): JsonResponse
     {
         $valid = $request->validate([
             'guess' => 'required|string|max:255',
             'is_last_guess' => 'sometimes|boolean',
+            'game_date' => 'sometimes|date|before_or_equal:today',
         ]);
 
-        $game = DailyGame::whereDate('game_date', today())
+        $gameDate = isset($valid['game_date'])
+            ? \Carbon\Carbon::parse($valid['game_date'])->startOfDay()
+            : today();
+
+        $game = DailyGame::whereDate('game_date', $gameDate)
             ->with('answer')
             ->first();
 
         if (! $game || ! $game->answer) {
-            return response()->json(['error' => 'No game or answer for today'], 404);
+            return response()->json(['error' => 'No game or answer for this date'], 404);
         }
 
         $correct = strcasecmp(trim($valid['guess']), $game->answer->name) === 0;
@@ -64,7 +92,13 @@ class GameController extends Controller
 
         $payload = ['correct' => $correct];
         if ($correct || $gameOver) {
-            $payload['answerName'] = $game->answer->name;
+            $a = $game->answer;
+            $payload['answer'] = [
+                'name' => $a->name,
+                'year' => $a->birth_year,
+                'tagline' => $a->tagline ?? '',
+                'photo_url' => $a->photo_url,
+            ];
         }
         if ($gameOver) {
             $payload['gameOver'] = true;

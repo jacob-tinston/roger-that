@@ -1,6 +1,6 @@
 import { Link, usePage } from "@inertiajs/react"
 import { useState, useEffect } from "react"
-import { HelpCircle, User } from "lucide-react"
+import { ChevronLeft, HelpCircle, User } from "lucide-react"
 import { login, logout } from "@/routes"
 import { type SharedData } from "@/types"
 import { CelebrityCard } from "./celebrity-card"
@@ -31,29 +31,108 @@ const REACTIONS = {
 
 const BUTTON_COPY = ["Take a punt", "Bold choice", "Feeling lucky?", "Roll the dice", "Last roll of the dice"]
 
+const WIN_CAPTIONS = [
+  "You absolute menace.",
+  "Nailed it. Obviously.",
+  "Someone's been paying attention.",
+  "Knew it. Knew it.",
+  "Well played, detective.",
+  "You're good at this. Too good.",
+  "Called it.",
+  "Absolutely unhinged. We approve.",
+]
+
+const LOSE_CAPTIONS = [
+  "Turns out it was him. Of course it was.",
+  "Yep. Him. All along.",
+  "Should've seen it coming, really.",
+  "The obvious one. Classic.",
+  "Him. Obviously him.",
+  "That's the guy. Sorry.",
+  "Of course it was him.",
+]
+
+const LOSE_SUB_CAPTIONS = [
+  "Better luck tomorrow, hotshot.",
+  "See you tomorrow, detective.",
+  "Tomorrow's another guess.",
+  "Back at it tomorrow.",
+  "There's always tomorrow.",
+]
+
 type GameState = "playing" | "won" | "lost"
+
+interface Answer {
+  name: string
+  year: number
+  tagline: string
+  photo_url: string | null
+}
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 0) return ""
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase() || parts[0].charAt(0).toUpperCase()
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+}
+
+function AnswerCard({ answer }: { answer: Answer }) {
+  const [imgFailed, setImgFailed] = useState(false)
+  const showPhoto = Boolean(answer.photo_url) && !imgFailed
+  const initials = getInitials(answer.name)
+
+  return (
+    <div className="max-w-[200px] mx-auto rounded-2xl overflow-hidden bg-white border border-slate-100 shadow-lg">
+      <div className="aspect-square relative">
+        {showPhoto ? (
+          <img
+            src={answer.photo_url!}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-coral/20 to-coral/40 flex items-center justify-center">
+              <span className="text-3xl font-display font-bold text-coral/60">{initials}</span>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="p-4 text-center">
+        <h3 className="font-display font-bold text-slate-900 text-lg leading-tight">{answer.name}</h3>
+        <p className="text-slate-400 text-sm mt-1 font-body">Born {answer.year}</p>
+        <p className="text-coral text-xs mt-2 italic font-body">{answer.tagline}</p>
+      </div>
+    </div>
+  )
+}
 
 interface Subject {
   id: number
   name: string
   year: number
   hint: string
+  photo_url: string | null
 }
 
 interface RogerThatGameProps {
   subjects: Subject[]
   gameDate: string
   guessUrl: string
+  previousGameUrl: string | null
 }
 
-export function RogerThatGame({ subjects, guessUrl }: RogerThatGameProps) {
+export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl }: RogerThatGameProps) {
   const [subtitle, setSubtitle] = useState("")
   const [guessesRemaining, setGuessesRemaining] = useState(5)
   const [currentGuess, setCurrentGuess] = useState("")
   const [reaction, setReaction] = useState("")
   const [gameState, setGameState] = useState<GameState>("playing")
   const [matchedCards, setMatchedCards] = useState<number[]>([])
-  const [answerName, setAnswerName] = useState<string | null>(null)
+  const [answer, setAnswer] = useState<Answer | null>(null)
+  const [resultCaption, setResultCaption] = useState("")
+  const [resultSubCaption, setResultSubCaption] = useState<string | null>(null)
   const [showHelp, setShowHelp] = useState(false)
   const [showAccount, setShowAccount] = useState(false)
   const [guessing, setGuessing] = useState(false)
@@ -82,20 +161,28 @@ export function RogerThatGame({ subjects, guessUrl }: RogerThatGameProps) {
           'X-CSRF-TOKEN': getCsrfToken(),
           'X-Requested-With': 'XMLHttpRequest',
         },
-        body: JSON.stringify({ guess, is_last_guess: guessesRemaining === 1 }),
+        body: JSON.stringify({ guess, is_last_guess: guessesRemaining === 1, game_date: gameDate }),
       })
-      const data = (await res.json()) as { correct?: boolean; gameOver?: boolean; answerName?: string }
+      const data = (await res.json()) as {
+        correct?: boolean
+        gameOver?: boolean
+        answer?: Answer
+      }
 
       if (data.correct) {
         setGameState("won")
-        setAnswerName(data.answerName ?? null)
+        setAnswer(data.answer ?? null)
+        setResultCaption(WIN_CAPTIONS[Math.floor(Math.random() * WIN_CAPTIONS.length)])
+        setResultSubCaption(null)
         setMatchedCards(subjects.map((s) => s.id))
         return
       }
 
-      if (data.gameOver && data.answerName) {
+      if (data.gameOver && data.answer) {
         setGameState("lost")
-        setAnswerName(data.answerName)
+        setAnswer(data.answer)
+        setResultCaption(LOSE_CAPTIONS[Math.floor(Math.random() * LOSE_CAPTIONS.length)])
+        setResultSubCaption(LOSE_SUB_CAPTIONS[Math.floor(Math.random() * LOSE_SUB_CAPTIONS.length)])
         return
       }
 
@@ -160,6 +247,7 @@ export function RogerThatGame({ subjects, guessUrl }: RogerThatGameProps) {
                   name={celeb.name}
                   year={celeb.year}
                   hint={celeb.hint}
+                  photoUrl={celeb.photo_url}
                   isMatched={matchedCards.includes(celeb.id)}
                   isLocked={gameState !== "playing"}
                 />
@@ -201,27 +289,40 @@ export function RogerThatGame({ subjects, guessUrl }: RogerThatGameProps) {
         {/* Win State */}
         {gameState === "won" && (
           <div className="text-center py-8 animate-in fade-in zoom-in-95 duration-500">
-            <div className="text-6xl mb-4">😏</div>
-            <h2 className="font-display text-3xl font-black text-slate-900 mb-2">Roger that</h2>
-            <p className="text-slate-500 font-body">You absolute menace.</p>
-            <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
-              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-              {answerName ?? '—'}
-            </div>
+            <h2 className="font-display text-3xl font-black text-slate-900 mb-6">Roger that</h2>
+            {answer && <AnswerCard answer={answer} />}
+            <p className="mt-6 text-slate-500 font-body">{resultCaption}</p>
+            {previousGameUrl && (
+              <div className="mt-8">
+                <Button variant="coral" size="xl" asChild className="gap-2">
+                  <Link href={previousGameUrl}>
+                    <ChevronLeft className="w-4 h-4 shrink-0" />
+                    Play previous game
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
         {/* Lose State */}
         {gameState === "lost" && (
           <div className="text-center py-8 animate-in fade-in zoom-in-95 duration-500">
-            <div className="text-6xl mb-4">😬</div>
-            <h2 className="font-display text-2xl font-bold text-slate-900 mb-2">
-              Turns out it was him. Of course it was.
-            </h2>
-            <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-coral/10 text-coral rounded-full text-sm font-medium">
-              {answerName ?? '—'}
-            </div>
-            <p className="mt-4 text-slate-400 font-body text-sm">Better luck tomorrow, hotshot.</p>
+            {answer && <AnswerCard answer={answer} />}
+            <p className="mt-6 text-slate-900 font-body font-medium">{resultCaption}</p>
+            {resultSubCaption && (
+              <p className="mt-2 text-slate-400 font-body text-sm">{resultSubCaption}</p>
+            )}
+            {previousGameUrl && (
+              <div className="mt-8">
+                <Button variant="coral" size="xl" asChild className="gap-2">
+                  <Link href={previousGameUrl}>
+                    <ChevronLeft className="w-4 h-4 shrink-0" />
+                    Play previous game
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

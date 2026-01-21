@@ -3,13 +3,14 @@ import { Head, usePage } from '@inertiajs/react';
 import { RogerThatGame } from '@/components/roger-that-game';
 
 interface GamePageProps {
-    subjects: Array<{ id: number; name: string; year: number; hint: string }>;
+    subjects: Array<{ id: number; name: string; year: number; hint: string; photo_url: string | null }>;
     gameDate: string;
     guessUrl: string;
+    previousGameUrl: string | null;
 }
 
 export default function Game() {
-    const { subjects, gameDate, guessUrl } = usePage().props as GamePageProps;
+    const { subjects, gameDate, guessUrl, previousGameUrl } = usePage().props as GamePageProps;
 
     return (
         <>
@@ -21,7 +22,12 @@ export default function Game() {
                 />
             </Head>
             <main className="min-h-screen bg-eggplant-pattern flex items-center justify-center p-4">
-                <RogerThatGame subjects={subjects} gameDate={gameDate} guessUrl={guessUrl} />
+                <RogerThatGame
+                    subjects={subjects}
+                    gameDate={gameDate}
+                    guessUrl={guessUrl}
+                    previousGameUrl={previousGameUrl}
+                />
             </main>
         </>
     );

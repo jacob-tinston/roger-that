@@ -1,16 +1,27 @@
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 0) return ""
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase() || parts[0].charAt(0).toUpperCase()
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+}
+
 interface CelebrityCardProps {
   name: string
   year: number
   hint: string
+  photoUrl?: string | null
   isMatched: boolean
   isLocked: boolean
 }
 
-export function CelebrityCard({ name, year, hint, isMatched, isLocked }: CelebrityCardProps) {
+export function CelebrityCard({ name, year, hint, photoUrl, isMatched, isLocked }: CelebrityCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
+  const [imgFailed, setImgFailed] = useState(false)
+  const showPhoto = Boolean(photoUrl) && !imgFailed
+  const initials = getInitials(name)
 
   return (
     <div
@@ -40,12 +51,21 @@ export function CelebrityCard({ name, year, hint, isMatched, isLocked }: Celebri
             isLocked && "opacity-50 saturate-50",
           )}
         >
-          {/* Avatar placeholder with grain texture */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-coral/20 to-coral/40 flex items-center justify-center">
-              <span className="text-3xl font-display font-bold text-coral/60">{name.charAt(0)}</span>
+          {/* Thumbnail or initials */}
+          {showPhoto ? (
+            <img
+              src={photoUrl!}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+              onError={() => setImgFailed(true)}
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-coral/20 to-coral/40 flex items-center justify-center">
+                <span className="text-3xl font-display font-bold text-coral/60">{initials}</span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Grain overlay */}
           <div

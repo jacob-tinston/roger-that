@@ -7,8 +7,8 @@ Route::get('/', function () {
     return redirect()->route('game');
 })->name('home');
 
-Route::get('daily', [GameController::class, 'index'])->name('game');
 Route::post('daily/guess', [GameController::class, 'guess'])->name('game.guess');
+Route::get('daily/{date?}', [GameController::class, 'index'])->name('game')->where('date', '[0-9]{4}-[0-9]{2}-[0-9]{2}');
 
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('admin', function () {
