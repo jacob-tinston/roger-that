@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('daily_games', function (Blueprint $table) {
+        Schema::create('daily_game_subject', function (Blueprint $table) {
             $table->id();
-            $table->string('type')->default('guess_connection');
-            $table->foreignId('answer_id')->nullable()->constrained('celebrities')->nullOnDelete();
-            $table->date('game_date')->unique();
+            $table->foreignId('daily_game_id')->constrained('daily_games')->cascadeOnDelete();
+            $table->foreignId('celebrity_id')->constrained('celebrities')->cascadeOnDelete();
             $table->timestamps();
+
+            $table->unique(['daily_game_id', 'celebrity_id']);
         });
     }
 
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('daily_games');
+        Schema::dropIfExists('daily_game_subject');
     }
 };

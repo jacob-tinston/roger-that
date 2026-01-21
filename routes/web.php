@@ -1,15 +1,14 @@
 <?php
 
+use App\Http\Controllers\GameController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', function () {
     return redirect()->route('game');
 })->name('home');
 
-Route::get('daily', function () {
-    return Inertia::render('game');
-})->name('game');
+Route::get('daily', [GameController::class, 'index'])->name('game');
+Route::post('daily/guess', [GameController::class, 'guess'])->name('game.guess');
 
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('admin', function () {

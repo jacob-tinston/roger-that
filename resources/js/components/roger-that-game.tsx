@@ -31,26 +31,32 @@ const REACTIONS = {
 
 const BUTTON_COPY = ["Take a punt", "Bold choice", "Feeling lucky?", "Roll the dice", "Last roll of the dice"]
 
-const CELEBRITIES = [
-  { id: 1, name: "Emma Stone", year: 1988, hint: "Oscar winner, red carpet regular" },
-  { id: 2, name: "Blake Lively", year: 1987, hint: "No stranger to headlines" },
-  { id: 3, name: "Taylor Swift", year: 1989, hint: "Writes songs about everyone" },
-  { id: 4, name: "Margot Robbie", year: 1990, hint: "Australia's finest export" },
-]
-
-const CORRECT_ANSWER = "Roger Federer"
-
 type GameState = "playing" | "won" | "lost"
 
-export function RogerThatGame() {
+interface Subject {
+  id: number
+  name: string
+  year: number
+  hint: string
+}
+
+interface RogerThatGameProps {
+  subjects: Subject[]
+  gameDate: string
+  guessUrl: string
+}
+
+export function RogerThatGame({ subjects, guessUrl }: RogerThatGameProps) {
   const [subtitle, setSubtitle] = useState("")
   const [guessesRemaining, setGuessesRemaining] = useState(5)
   const [currentGuess, setCurrentGuess] = useState("")
   const [reaction, setReaction] = useState("")
   const [gameState, setGameState] = useState<GameState>("playing")
   const [matchedCards, setMatchedCards] = useState<number[]>([])
+  const [answerName, setAnswerName] = useState<string | null>(null)
   const [showHelp, setShowHelp] = useState(false)
   const [showAccount, setShowAccount] = useState(false)
+  const [guessing, setGuessing] = useState(false)
 
   const { auth } = usePage<SharedData>().props
   const user = auth?.user
@@ -59,27 +65,46 @@ export function RogerThatGame() {
     setSubtitle(SUBTITLES[Math.floor(Math.random() * SUBTITLES.length)])
   }, [])
 
-  const handleGuess = () => {
-    if (!currentGuess.trim() || gameState !== "playing") return
+  const getCsrfToken = (): string =>
+    document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
 
-    if (currentGuess.toLowerCase() === CORRECT_ANSWER.toLowerCase()) {
-      setGameState("won")
-      setMatchedCards([1, 2, 3, 4])
-      return
+  const handleGuess = async () => {
+    const guess = currentGuess.trim()
+    if (!guess || gameState !== "playing" || guessing) return
+
+    setGuessing(true)
+    try {
+      const res = await fetch(guessUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': getCsrfToken(),
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({ guess, is_last_guess: guessesRemaining === 1 }),
+      })
+      const data = (await res.json()) as { correct?: boolean; gameOver?: boolean; answerName?: string }
+
+      if (data.correct) {
+        setGameState("won")
+        setAnswerName(data.answerName ?? null)
+        setMatchedCards(subjects.map((s) => s.id))
+        return
+      }
+
+      if (data.gameOver && data.answerName) {
+        setGameState("lost")
+        setAnswerName(data.answerName)
+        return
+      }
+
+      setGuessesRemaining((g) => g - 1)
+      setReaction(REACTIONS.wrong[Math.floor(Math.random() * REACTIONS.wrong.length)])
+      setCurrentGuess("")
+    } finally {
+      setGuessing(false)
     }
-
-    const newGuessesRemaining = guessesRemaining - 1
-    setGuessesRemaining(newGuessesRemaining)
-
-    if (newGuessesRemaining <= 0) {
-      setGameState("lost")
-      return
-    }
-
-    // Random reaction
-    const reactions = REACTIONS.wrong
-    setReaction(reactions[Math.floor(Math.random() * reactions.length)])
-    setCurrentGuess("")
   }
 
   const getButtonText = () => {
@@ -129,7 +154,7 @@ export function RogerThatGame() {
           <>
             {/* Celebrity Grid */}
             <div className="grid grid-cols-2 gap-4 mb-8">
-              {CELEBRITIES.map((celeb) => (
+              {subjects.map((celeb) => (
                 <CelebrityCard
                   key={celeb.id}
                   name={celeb.name}
@@ -148,6 +173,7 @@ export function RogerThatGame() {
               onSubmit={handleGuess}
               buttonText={getButtonText()}
               guessesRemaining={guessesRemaining}
+              disabled={guessing}
             />
 
             {/* Reaction */}
@@ -180,7 +206,7 @@ export function RogerThatGame() {
             <p className="text-slate-500 font-body">You absolute menace.</p>
             <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
               <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-              {CORRECT_ANSWER}
+              {answerName ?? '—'}
             </div>
           </div>
         )}
@@ -193,7 +219,7 @@ export function RogerThatGame() {
               Turns out it was him. Of course it was.
             </h2>
             <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-coral/10 text-coral rounded-full text-sm font-medium">
-              {CORRECT_ANSWER}
+              {answerName ?? '—'}
             </div>
             <p className="mt-4 text-slate-400 font-body text-sm">Better luck tomorrow, hotshot.</p>
           </div>

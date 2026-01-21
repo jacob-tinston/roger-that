@@ -11,9 +11,10 @@ interface GuessInputProps {
   onSubmit: () => void
   buttonText: string
   guessesRemaining: number
+  disabled?: boolean
 }
 
-export function GuessInput({ value, onChange, onSubmit, buttonText, guessesRemaining }: GuessInputProps) {
+export function GuessInput({ value, onChange, onSubmit, buttonText, guessesRemaining, disabled = false }: GuessInputProps) {
   const [placeholder, setPlaceholder] = useState("")
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export function GuessInput({ value, onChange, onSubmit, buttonText, guessesRemai
       />
       <button
         type="submit"
-        disabled={!value.trim()}
+        disabled={!value.trim() || disabled}
         className={cn(
           "w-full px-6 py-3 rounded-xl font-display font-bold text-white",
           "bg-coral hover:bg-coral/90",

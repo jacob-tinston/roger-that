@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Celebrity;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,9 +18,7 @@ class DailyGameFactory extends Factory
     public function definition(): array
     {
         return [
-            'answer_type' => 'male',
-            'subjects' => [],
-            'answer' => [],
+            'answer_id' => Celebrity::factory(),
             'game_date' => fake()->unique()->dateTimeBetween('-1 year', '+1 year')->format('Y-m-d'),
         ];
     }
