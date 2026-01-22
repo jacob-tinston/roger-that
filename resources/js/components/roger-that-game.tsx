@@ -9,56 +9,6 @@ import { Button } from "./ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog"
 import { cn } from "@/lib/utils"
 
-const SUBTITLES = [
-  "One man. Four women. Five guesses.",
-  "You're looking for a very busy guy.",
-  "Choose wisely. History will judge you.",
-  "Someone's been naughty. Find him.",
-  "The audacity is palpable.",
-]
-
-const REACTIONS = {
-  wrong: [
-    "Ambitious. Incorrect.",
-    "You're circling the right energy.",
-    "That man wishes.",
-    "Swing and a miss, champ.",
-    "Bold theory. Wrong human.",
-    "Not even close, but I admire the confidence.",
-  ],
-  close: ["Getting warmer...", "Oh, you're onto something.", "The plot thickens."],
-}
-
-const BUTTON_COPY = ["Take a punt", "Bold choice", "Feeling lucky?", "Roll the dice", "Last roll of the dice"]
-
-const WIN_CAPTIONS = [
-  "You absolute menace.",
-  "Nailed it. Obviously.",
-  "Someone's been paying attention.",
-  "Knew it. Knew it.",
-  "Well played, detective.",
-  "You're good at this. Too good.",
-  "Called it.",
-  "Absolutely unhinged. We approve.",
-]
-
-const LOSE_CAPTIONS = [
-  "Turns out it was him. Of course it was.",
-  "Yep. Him. All along.",
-  "Should've seen it coming, really.",
-  "The obvious one. Classic.",
-  "Him. Obviously him.",
-  "That's the guy. Sorry.",
-  "Of course it was him.",
-]
-
-const LOSE_SUB_CAPTIONS = [
-  "Better luck tomorrow, hotshot.",
-  "See you tomorrow, detective.",
-  "Tomorrow's another guess.",
-  "Back at it tomorrow.",
-  "There's always tomorrow.",
-]
 
 type GameState = "playing" | "won" | "lost"
 
@@ -82,13 +32,13 @@ function AnswerCard({ answer }: { answer: Answer }) {
   const initials = getInitials(answer.name)
 
   return (
-    <div className="max-w-[200px] mx-auto rounded-2xl overflow-hidden bg-white border border-slate-100 shadow-lg">
+    <div className="max-w-[250px] mx-auto rounded-2xl overflow-hidden bg-white border border-slate-100 shadow-lg">
       <div className="aspect-square relative">
         {showPhoto ? (
           <img
             src={answer.photo_url!}
             alt=""
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover object-top"
             onError={() => setImgFailed(true)}
           />
         ) : (
@@ -116,14 +66,35 @@ interface Subject {
   photo_url: string | null
 }
 
+interface GameSettings {
+  SUBTITLES?: string[]
+  REACTIONS?: {
+    wrong?: string[]
+    close?: string[]
+  }
+  BUTTON_COPY?: string[]
+  WIN_CAPTIONS?: string[]
+  WIN_SUB_CAPTIONS?: string[]
+  LOSE_CAPTIONS?: string[]
+  LOSE_SUB_CAPTIONS?: string[]
+}
+
 interface RogerThatGameProps {
   subjects: Subject[]
   gameDate: string
   guessUrl: string
   previousGameUrl: string | null
+  settings: GameSettings
 }
 
-export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl }: RogerThatGameProps) {
+export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, settings }: RogerThatGameProps) {
+  const SUBTITLES = settings.SUBTITLES || []
+  const REACTIONS = settings.REACTIONS || { wrong: [], close: [] }
+  const BUTTON_COPY = settings.BUTTON_COPY || []
+  const WIN_CAPTIONS = settings.WIN_CAPTIONS || []
+  const WIN_SUB_CAPTIONS = settings.WIN_SUB_CAPTIONS || []
+  const LOSE_CAPTIONS = settings.LOSE_CAPTIONS || []
+  const LOSE_SUB_CAPTIONS = settings.LOSE_SUB_CAPTIONS || []
   const [subtitle, setSubtitle] = useState("")
   const [guessesRemaining, setGuessesRemaining] = useState(5)
   const [currentGuess, setCurrentGuess] = useState("")
@@ -141,7 +112,9 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl }:
   const user = auth?.user
 
   useEffect(() => {
-    setSubtitle(SUBTITLES[Math.floor(Math.random() * SUBTITLES.length)])
+    if (SUBTITLES.length > 0) {
+      setSubtitle(SUBTITLES[Math.floor(Math.random() * SUBTITLES.length)])
+    }
   }, [])
 
   const getCsrfToken = (): string =>
@@ -172,8 +145,12 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl }:
       if (data.correct) {
         setGameState("won")
         setAnswer(data.answer ?? null)
-        setResultCaption(WIN_CAPTIONS[Math.floor(Math.random() * WIN_CAPTIONS.length)])
-        setResultSubCaption(null)
+        if (WIN_CAPTIONS.length > 0) {
+          setResultCaption(WIN_CAPTIONS[Math.floor(Math.random() * WIN_CAPTIONS.length)])
+        }
+        if (WIN_SUB_CAPTIONS.length > 0) {
+          setResultSubCaption(WIN_SUB_CAPTIONS[Math.floor(Math.random() * WIN_SUB_CAPTIONS.length)])
+        }
         setMatchedCards(subjects.map((s) => s.id))
         return
       }
@@ -181,13 +158,19 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl }:
       if (data.gameOver && data.answer) {
         setGameState("lost")
         setAnswer(data.answer)
-        setResultCaption(LOSE_CAPTIONS[Math.floor(Math.random() * LOSE_CAPTIONS.length)])
-        setResultSubCaption(LOSE_SUB_CAPTIONS[Math.floor(Math.random() * LOSE_SUB_CAPTIONS.length)])
+        if (LOSE_CAPTIONS.length > 0) {
+          setResultCaption(LOSE_CAPTIONS[Math.floor(Math.random() * LOSE_CAPTIONS.length)])
+        }
+        if (LOSE_SUB_CAPTIONS.length > 0) {
+          setResultSubCaption(LOSE_SUB_CAPTIONS[Math.floor(Math.random() * LOSE_SUB_CAPTIONS.length)])
+        }
         return
       }
 
       setGuessesRemaining((g) => g - 1)
-      setReaction(REACTIONS.wrong[Math.floor(Math.random() * REACTIONS.wrong.length)])
+      if (REACTIONS.wrong && REACTIONS.wrong.length > 0) {
+        setReaction(REACTIONS.wrong[Math.floor(Math.random() * REACTIONS.wrong.length)])
+      }
       setCurrentGuess("")
     } finally {
       setGuessing(false)
@@ -195,6 +178,9 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl }:
   }
 
   const getButtonText = () => {
+    if (BUTTON_COPY.length === 0) {
+      return 'Submit'
+    }
     const index = Math.min(5 - guessesRemaining, BUTTON_COPY.length - 1)
     return BUTTON_COPY[index]
   }
@@ -289,14 +275,15 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl }:
         {/* Win State */}
         {gameState === "won" && (
           <div className="text-center py-8 animate-in fade-in zoom-in-95 duration-500">
-            <h2 className="font-display text-3xl font-black text-slate-900 mb-6">Roger that</h2>
             {answer && <AnswerCard answer={answer} />}
-            <p className="mt-6 text-slate-500 font-body">{resultCaption}</p>
+            <h2 className="font-display text-xl font-black text-slate-900 mt-6">{resultCaption}</h2>
+            {resultSubCaption && (
+              <p className="mt-2 text-slate-400 font-body text-sm">{resultSubCaption}</p>
+            )}
             {previousGameUrl && (
               <div className="mt-8">
                 <Button variant="coral" size="xl" asChild className="gap-2">
                   <Link href={previousGameUrl}>
-                    <ChevronLeft className="w-4 h-4 shrink-0" />
                     Play previous game
                   </Link>
                 </Button>
@@ -309,7 +296,7 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl }:
         {gameState === "lost" && (
           <div className="text-center py-8 animate-in fade-in zoom-in-95 duration-500">
             {answer && <AnswerCard answer={answer} />}
-            <p className="mt-6 text-slate-900 font-body font-medium">{resultCaption}</p>
+            <h2 className="font-display text-xl font-black text-slate-900 mt-6">{resultCaption}</h2>
             {resultSubCaption && (
               <p className="mt-2 text-slate-400 font-body text-sm">{resultSubCaption}</p>
             )}
@@ -317,7 +304,6 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl }:
               <div className="mt-8">
                 <Button variant="coral" size="xl" asChild className="gap-2">
                   <Link href={previousGameUrl}>
-                    <ChevronLeft className="w-4 h-4 shrink-0" />
                     Play previous game
                   </Link>
                 </Button>

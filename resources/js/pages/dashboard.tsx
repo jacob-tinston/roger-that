@@ -1,7 +1,8 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
+import AdminLayout from '@/layouts/admin/layout';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 
@@ -12,37 +13,115 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+interface Game {
+    id: number;
+    date: string;
+    formatted_date: string;
+    answer: {
+        name: string;
+        year: number;
+        tagline: string;
+        photo_url: string | null;
+    } | null;
+    subjects: string[];
+    url: string;
+}
+
+interface DashboardPageProps {
+    games: Game[];
+}
+
 export default function Dashboard() {
+    const { games } = usePage<DashboardPageProps>().props;
+
     return (
-        <>
-            <Head>
-                <link rel="preconnect" href="https://fonts.bunny.net" />
-                <link
-                    href="https://fonts.bunny.net/css?family=poppins:400,600,700,800,900&family=inter:400,500,600"
-                    rel="stylesheet"
-                />
-                <title>Dashboard</title>
-            </Head>
-            <AppLayout breadcrumbs={breadcrumbs}>
-                <div className="min-h-screen bg-eggplant-pattern p-4">
-                    <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto">
-                        <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                            <div className="relative aspect-video overflow-hidden rounded-3xl bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border-2 border-slate-100">
-                                <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                            </div>
-                            <div className="relative aspect-video overflow-hidden rounded-3xl bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border-2 border-slate-100">
-                                <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                            </div>
-                            <div className="relative aspect-video overflow-hidden rounded-3xl bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border-2 border-slate-100">
-                                <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                            </div>
-                        </div>
-                        <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-3xl bg-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border-2 border-slate-100 md:min-h-min">
-                            <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                        </div>
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Dashboard - Previous Games" />
+            <AdminLayout title="Previous Games" description="Browse and replay all previous daily games">
+                {games.length === 0 ? (
+                    <div className="py-12 text-center">
+                        <p className="text-slate-500 font-body">
+                            No games available yet. Check back tomorrow!
+                        </p>
                     </div>
-                </div>
-            </AppLayout>
-        </>
+                ) : (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {games.map((game) => (
+                            <Link
+                                key={game.id}
+                                href={game.url}
+                                className="block transition-transform hover:scale-[1.02]"
+                            >
+                                <Card className="h-full cursor-pointer transition-shadow hover:shadow-lg">
+                                    <CardHeader>
+                                        <CardTitle className="text-lg font-display">
+                                            {game.formatted_date}
+                                        </CardTitle>
+                                        <CardDescription className="font-body space-y-1">
+                                            {game.answer && (
+                                                <div>
+                                                    <span className="font-semibold">Answer:</span> {game.answer.name}
+                                                </div>
+                                            )}
+                                            {game.subjects.length > 0 && (
+                                                <div>
+                                                    <span className="font-semibold">Subjects:</span>{' '}
+                                                    {game.subjects.join(', ')}
+                                                </div>
+                                            )}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {game.answer ? (
+                                            <div className="flex items-center gap-4">
+                                                {game.answer.photo_url ? (
+                                                    <img
+                                                        src={game.answer.photo_url}
+                                                        alt={game.answer.name}
+                                                        className="h-16 w-16 rounded-full object-cover object-top"
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display =
+                                                                'none';
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-slate-200 to-slate-300">
+                                                        <span className="text-xl font-bold text-slate-600 font-display">
+                                                            {game.answer.name
+                                                                .split(' ')
+                                                                .map((n) => n[0])
+                                                                .join('')
+                                                                .toUpperCase()
+                                                                .slice(0, 2)}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <div className="flex-1">
+                                                    <p className="font-semibold text-slate-900 font-body">
+                                                        {game.answer.name}
+                                                    </p>
+                                                    <p className="text-sm text-slate-500 font-body">
+                                                        Born {game.answer.year}
+                                                    </p>
+                                                    {game.answer.tagline && (
+                                                        <p className="mt-1 text-xs italic text-coral font-body">
+                                                            {game.answer.tagline}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="text-slate-500 font-body">
+                                                Answer not available
+                                            </p>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </Link>
+                        ))}
+                    </div>
+                )}
+            </AdminLayout>
+        </AppLayout>
     );
 }

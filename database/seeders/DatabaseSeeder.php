@@ -17,11 +17,15 @@ class DatabaseSeeder extends Seeder
         $adminRole = Role::firstOrCreate(['name' => 'Admin']);
         Role::firstOrCreate(['name' => 'User']);
 
-        User::factory()->create([
-            'name' => 'RogerThat Admin',
-            'email' => 'admin@playrogerthat.com',
-            'password' => Hash::make('password'),
-            'role_id' => $adminRole->id,
-        ]);
+        if (! User::where('email', 'admin@playrogerthat.com')->exists()) {
+            User::factory()->create([
+                'name' => 'RogerThat Admin',
+                'email' => 'admin@playrogerthat.com',
+                'password' => Hash::make('password'),
+                'role_id' => $adminRole->id,
+            ]);
+        }
+
+        $this->call(SettingsSeeder::class);
     }
 }

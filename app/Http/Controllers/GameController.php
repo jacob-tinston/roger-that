@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\CreateDailyGame;
 use App\Models\DailyGame;
+use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -55,11 +56,32 @@ class GameController extends Controller
             ? route('game', ['date' => $previous->game_date->format('Y-m-d')])
             : null;
 
+        $gameSettings = Setting::whereIn('key', [
+            'SUBTITLES',
+            'REACTIONS',
+            'BUTTON_COPY',
+            'WIN_CAPTIONS',
+            'WIN_SUB_CAPTIONS',
+            'LOSE_CAPTIONS',
+            'LOSE_SUB_CAPTIONS',
+        ])->get()->mapWithKeys(function ($setting) {
+            return [$setting->key => $setting->value];
+        })->toArray();
+
         return Inertia::render('game', [
             'subjects' => $subjects->values()->all(),
             'gameDate' => $game->game_date->toDateString(),
             'guessUrl' => route('game.guess'),
             'previousGameUrl' => $previousGameUrl,
+            'settings' => [
+                'SUBTITLES' => $gameSettings['SUBTITLES'] ?? [],
+                'REACTIONS' => $gameSettings['REACTIONS'] ?? ['wrong' => [], 'close' => []],
+                'BUTTON_COPY' => $gameSettings['BUTTON_COPY'] ?? [],
+                'WIN_CAPTIONS' => $gameSettings['WIN_CAPTIONS'] ?? [],
+                'WIN_SUB_CAPTIONS' => $gameSettings['WIN_SUB_CAPTIONS'] ?? [],
+                'LOSE_CAPTIONS' => $gameSettings['LOSE_CAPTIONS'] ?? [],
+                'LOSE_SUB_CAPTIONS' => $gameSettings['LOSE_SUB_CAPTIONS'] ?? [],
+            ],
         ]);
     }
 
@@ -105,5 +127,36 @@ class GameController extends Controller
         }
 
         return response()->json($payload);
+    }
+
+    /**
+     * Show all previous games for the dashboard.
+     */
+    public function dashboard(): Response
+    {
+        $games = DailyGame::query()
+            ->where('game_date', '<=', today())
+            ->with(['answer', 'subjects'])
+            ->orderByDesc('game_date')
+            ->get()
+            ->map(function ($game) {
+                return [
+                    'id' => $game->id,
+                    'date' => $game->game_date->toDateString(),
+                    'formatted_date' => $game->game_date->format('F j, Y'),
+                    'answer' => $game->answer ? [
+                        'name' => $game->answer->name,
+                        'year' => $game->answer->birth_year,
+                        'tagline' => $game->answer->tagline ?? '',
+                        'photo_url' => $game->answer->photo_url,
+                    ] : null,
+                    'subjects' => $game->subjects->map(fn ($subject) => $subject->name)->all(),
+                    'url' => route('game', ['date' => $game->game_date->format('Y-m-d')]),
+                ];
+            });
+
+        return Inertia::render('dashboard', [
+            'games' => $games->values()->all(),
+        ]);
     }
 }

@@ -56,7 +56,7 @@ export function CelebrityCard({ name, year, hint, photoUrl, isMatched, isLocked 
             <img
               src={photoUrl!}
               alt=""
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover object-top"
               onError={() => setImgFailed(true)}
             />
           ) : (
