@@ -302,7 +302,7 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
 
         {/* Win State */}
         {gameState === "won" && (
-          <div className="text-center py-8 animate-in fade-in zoom-in-95 duration-500">
+          <div className="text-center animate-in fade-in zoom-in-95 duration-500">
             <div className="text-4xl mb-4">👌👈😏</div>
             {answer && <AnswerCard answer={answer} />}
             <h2 className="font-display text-xl font-black text-slate-900 mt-6">{resultCaption}</h2>
@@ -323,7 +323,7 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
 
         {/* Lose State */}
         {gameState === "lost" && (
-          <div className="text-center py-8 animate-in fade-in zoom-in-95 duration-500">
+          <div className="text-center animate-in fade-in zoom-in-95 duration-500">
             <div className="text-4xl mb-4">👎💩😔</div>
             {answer && <AnswerCard answer={answer} />}
             <h2 className="font-display text-xl font-black text-slate-900 mt-6">{resultCaption}</h2>
