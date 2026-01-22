@@ -85,7 +85,7 @@ export default function History() {
                                             href={gameItem.url}
                                             className="block p-4 rounded-xl border border-slate-200 hover:border-coral hover:shadow-md transition-all"
                                         >
-                                            <div className="flex items-center justify-between gap-4">
+                                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
                                                 <div className="flex-1">
                                                     <p className="font-display font-bold text-slate-900 text-lg">
                                                         {gameItem.formatted_date}
