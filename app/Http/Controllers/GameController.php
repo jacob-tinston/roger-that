@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\CreateDailyGame;
 use App\Models\DailyGame;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
@@ -13,7 +12,7 @@ use Inertia\Response;
 class GameController extends Controller
 {
     /**
-     * Show the daily game. Ensures today's game exists when no date given; for a specific date, 404 if missing.
+     * Show the daily game. For today, shows "no game" message if none exists; for a specific date, 404 if missing.
      * Passes subjects to the frontend (answer is never sent) and previousGameUrl when an earlier game exists.
      */
     public function index(?string $date = null): Response|JsonResponse
@@ -31,10 +30,23 @@ class GameController extends Controller
 
         if (! $game) {
             if ($isToday) {
-                (new CreateDailyGame)->handle();
-                $game = DailyGame::whereDate('game_date', today())
-                    ->with('subjects')
-                    ->firstOrFail();
+                // Don't create game automatically - just show "no game for today" message
+                $previous = DailyGame::where('game_date', '<', $gameDate)
+                    ->orderByDesc('game_date')
+                    ->first();
+
+                $previousGameUrl = $previous
+                    ? route('game', ['date' => $previous->game_date->format('Y-m-d')])
+                    : null;
+
+                return Inertia::render('game', [
+                    'subjects' => null,
+                    'gameDate' => $gameDate->toDateString(),
+                    'guessUrl' => route('game.guess'),
+                    'previousGameUrl' => $previousGameUrl,
+                    'settings' => [],
+                    'noGame' => true,
+                ]);
             } else {
                 abort(404);
             }
@@ -82,6 +94,7 @@ class GameController extends Controller
                 'LOSE_CAPTIONS' => $gameSettings['LOSE_CAPTIONS'] ?? [],
                 'LOSE_SUB_CAPTIONS' => $gameSettings['LOSE_SUB_CAPTIONS'] ?? [],
             ],
+            'noGame' => false,
         ]);
     }
 
