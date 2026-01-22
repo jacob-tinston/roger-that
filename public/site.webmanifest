@@ -1,6 +1,7 @@
 {
-    "name": "",
-    "short_name": "",
+    "name": "Roger That",
+    "short_name": "Roger That",
+    "description": "Daily celebrity guessing game - One man. Four women. Five guesses.",
     "icons": [
        {
           "src": "/android-chrome-192x192.png",
@@ -15,5 +16,7 @@
     ],
     "theme_color": "#FFFFFF",
     "background_color": "#FFFFFF",
-    "display": "standalone"
+    "display": "standalone",
+    "start_url": "/daily",
+    "scope": "/"
  }

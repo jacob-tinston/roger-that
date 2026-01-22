@@ -39,6 +39,8 @@ class GameController extends Controller
                     ? route('game', ['date' => $previous->game_date->format('Y-m-d')])
                     : null;
 
+                $canonicalUrl = route('game', ['date' => $gameDate->format('Y-m-d')]);
+
                 return Inertia::render('game', [
                     'subjects' => null,
                     'gameDate' => $gameDate->toDateString(),
@@ -46,6 +48,8 @@ class GameController extends Controller
                     'previousGameUrl' => $previousGameUrl,
                     'settings' => [],
                     'noGame' => true,
+                    'canonicalUrl' => $canonicalUrl,
+                    'appUrl' => config('app.url'),
                 ]);
             } else {
                 abort(404);
@@ -80,6 +84,8 @@ class GameController extends Controller
             return [$setting->key => $setting->value];
         })->toArray();
 
+        $canonicalUrl = route('game', ['date' => $game->game_date->format('Y-m-d')]);
+
         return Inertia::render('game', [
             'subjects' => $subjects->values()->all(),
             'gameDate' => $game->game_date->toDateString(),
@@ -95,6 +101,8 @@ class GameController extends Controller
                 'LOSE_SUB_CAPTIONS' => $gameSettings['LOSE_SUB_CAPTIONS'] ?? [],
             ],
             'noGame' => false,
+            'canonicalUrl' => $canonicalUrl,
+            'appUrl' => config('app.url'),
         ]);
     }
 
