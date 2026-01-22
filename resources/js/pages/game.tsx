@@ -27,7 +27,7 @@ export default function Game() {
 
     return (
         <>
-            <Head title="The game of who Rogered who">
+            <Head title="Celebrity WhoDunnit?">
                 <link rel="preconnect" href="https://fonts.bunny.net" />
                 <link
                     href="https://fonts.bunny.net/css?family=poppins:400,600,700,800,900&family=inter:400,500,600"

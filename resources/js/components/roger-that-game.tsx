@@ -107,6 +107,7 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
   const [showHelp, setShowHelp] = useState(false)
   const [showAccount, setShowAccount] = useState(false)
   const [guessing, setGuessing] = useState(false)
+  const [isWrongGuess, setIsWrongGuess] = useState(false)
 
   const { auth } = usePage<SharedData>().props
   const user = auth?.user
@@ -152,6 +153,7 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
           setResultSubCaption(WIN_SUB_CAPTIONS[Math.floor(Math.random() * WIN_SUB_CAPTIONS.length)])
         }
         setMatchedCards(subjects.map((s) => s.id))
+        setIsWrongGuess(false)
         return
       }
 
@@ -164,14 +166,23 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
         if (LOSE_SUB_CAPTIONS.length > 0) {
           setResultSubCaption(LOSE_SUB_CAPTIONS[Math.floor(Math.random() * LOSE_SUB_CAPTIONS.length)])
         }
+        // Keep red outline on game over
+        setIsWrongGuess(true)
         return
       }
 
+      // Wrong guess - trigger shake and red outline
+      setIsWrongGuess(true)
       setGuessesRemaining((g) => g - 1)
       if (REACTIONS.wrong && REACTIONS.wrong.length > 0) {
         setReaction(REACTIONS.wrong[Math.floor(Math.random() * REACTIONS.wrong.length)])
       }
       setCurrentGuess("")
+      
+      // Clear wrong guess animation after animation completes
+      setTimeout(() => {
+        setIsWrongGuess(false)
+      }, 500)
     } finally {
       setGuessing(false)
     }
@@ -185,10 +196,27 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
     return BUTTON_COPY[index]
   }
 
+  // Determine outline color based on game state
+  const getGameCardOutline = () => {
+    if (gameState === "won") {
+      return "ring-2 ring-emerald-400 ring-offset-2"
+    }
+    if (gameState === "lost" || isWrongGuess) {
+      return "ring-2 ring-red-400 ring-offset-2"
+    }
+    return ""
+  }
+
   return (
     <div className="w-full max-w-lg">
       {/* Modal */}
-      <div className="bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-8 md:p-10 relative overflow-hidden transition-all duration-300 hover:shadow-[0_25px_80px_-15px_rgba(0,0,0,0.4)] hover:-translate-y-1">
+      <div
+        className={cn(
+          "bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-8 md:p-10 relative overflow-hidden transition-all duration-300 hover:shadow-[0_25px_80px_-15px_rgba(0,0,0,0.4)] hover:-translate-y-1",
+          getGameCardOutline(),
+          isWrongGuess && gameState === "playing" && "animate-shake"
+        )}
+      >
         {/* Help Icon */}
         <button
           onClick={() => setShowHelp(true)}
@@ -275,6 +303,7 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
         {/* Win State */}
         {gameState === "won" && (
           <div className="text-center py-8 animate-in fade-in zoom-in-95 duration-500">
+            <div className="text-4xl mb-4">👌👈😏</div>
             {answer && <AnswerCard answer={answer} />}
             <h2 className="font-display text-xl font-black text-slate-900 mt-6">{resultCaption}</h2>
             {resultSubCaption && (
@@ -295,6 +324,7 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
         {/* Lose State */}
         {gameState === "lost" && (
           <div className="text-center py-8 animate-in fade-in zoom-in-95 duration-500">
+            <div className="text-4xl mb-4">👎💩😔</div>
             {answer && <AnswerCard answer={answer} />}
             <h2 className="font-display text-xl font-black text-slate-900 mt-6">{resultCaption}</h2>
             {resultSubCaption && (
