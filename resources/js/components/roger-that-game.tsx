@@ -1,8 +1,9 @@
 import { Link, usePage } from "@inertiajs/react"
 import { useState, useEffect } from "react"
-import { ChevronLeft, HelpCircle, User } from "lucide-react"
-import { login, logout } from "@/routes"
+import { ChevronLeft, HelpCircle } from "lucide-react"
+import { history } from "@/routes"
 import { type SharedData } from "@/types"
+import { AccountButton } from "./account-button"
 import { CelebrityCard } from "./celebrity-card"
 import { GuessInput } from "./guess-input"
 import { Button } from "./ui/button"
@@ -105,7 +106,6 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
   const [resultCaption, setResultCaption] = useState("")
   const [resultSubCaption, setResultSubCaption] = useState<string | null>(null)
   const [showHelp, setShowHelp] = useState(false)
-  const [showAccount, setShowAccount] = useState(false)
   const [guessing, setGuessing] = useState(false)
   const [isWrongGuess, setIsWrongGuess] = useState(false)
 
@@ -227,23 +227,7 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
         </button>
 
         {/* Account Icon */}
-        {user ? (
-          <button
-            onClick={() => setShowAccount(true)}
-            className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
-            aria-label="Account"
-          >
-            <User className="w-5 h-5" />
-          </button>
-        ) : (
-          <Link
-            href={login().url}
-            className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
-            aria-label="Log in"
-          >
-            <User className="w-5 h-5" />
-          </Link>
-        )}
+        <AccountButton />
 
         {/* Header */}
         <div className="text-center mb-8">
@@ -309,15 +293,13 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
             {resultSubCaption && (
               <p className="mt-2 text-slate-400 font-body text-sm">{resultSubCaption}</p>
             )}
-            {previousGameUrl && (
-              <div className="mt-8">
-                <Button variant="coral" size="xl" asChild className="gap-2">
-                  <Link href={previousGameUrl}>
-                    Play previous game
-                  </Link>
-                </Button>
-              </div>
-            )}
+            <div className="mt-8">
+              <Button variant="coral" size="xl" asChild className="gap-2">
+                <Link href={history().url}>
+                  Play previous games
+                </Link>
+              </Button>
+            </div>
           </div>
         )}
 
@@ -330,15 +312,13 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
             {resultSubCaption && (
               <p className="mt-2 text-slate-400 font-body text-sm">{resultSubCaption}</p>
             )}
-            {previousGameUrl && (
-              <div className="mt-8">
-                <Button variant="coral" size="xl" asChild className="gap-2">
-                  <Link href={previousGameUrl}>
-                    Play previous game
-                  </Link>
-                </Button>
-              </div>
-            )}
+            <div className="mt-8">
+              <Button variant="coral" size="xl" asChild className="gap-2">
+                <Link href={history().url}>
+                  Play previous games
+                </Link>
+              </Button>
+            </div>
           </div>
         )}
       </div>
@@ -353,16 +333,16 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
             <DialogDescription className="text-left mt-4">
               <div className="space-y-4 text-slate-600 font-body text-sm md:text-base">
                 <p>
-                  <strong className="text-slate-900 font-semibold">The mission:</strong> Figure out which man connects all four women. You've got five guesses. Make them count.
+                  <strong className="text-slate-900 font-semibold font-body">The mission:</strong> Figure out which man connects all four women. You've got five guesses. Make them count.
                 </p>
                 <p>
-                  <strong className="text-slate-900 font-semibold">The cards:</strong> Hover over those celebrity cards to see their hints. They're not just there for decoration, you know.
+                  <strong className="text-slate-900 font-semibold font-body">The cards:</strong> Hover over those celebrity cards to see their hints. They're not just there for decoration, you know.
                 </p>
                 <p>
-                  <strong className="text-slate-900 font-semibold">The guess:</strong> Type in a name and hit that button. We'll let you know if you're on the right track or completely off base.
+                  <strong className="text-slate-900 font-semibold font-body">The guess:</strong> Type in a name and hit that button. We'll let you know if you're on the right track or completely off base.
                 </p>
                 <p>
-                  <strong className="text-slate-900 font-semibold">The dots:</strong> Those little circles? That's your remaining guesses. Watch them disappear as you swing and miss.
+                  <strong className="text-slate-900 font-semibold font-body">The dots:</strong> Those little circles? That's your remaining guesses. Watch them disappear as you swing and miss.
                 </p>
                 <p className="text-sm italic text-slate-500 pt-2">
                   Pro tip: The answer is probably more obvious than you think. Or less. Who knows? Good luck, detective.
@@ -373,51 +353,6 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
         </DialogContent>
       </Dialog>
 
-      {/* Account Dialog */}
-      {user && (
-        <Dialog open={showAccount} onOpenChange={setShowAccount}>
-          <DialogContent className="sm:max-w-lg bg-white rounded-3xl p-8 md:p-10 border-slate-200 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]">
-            <DialogHeader>
-              <DialogTitle className="font-display text-2xl md:text-3xl font-black text-slate-900 tracking-tight text-center">
-                My Account
-              </DialogTitle>
-              <DialogDescription asChild>
-                <div className="mt-4">
-                  <div className="flex gap-6 items-start">
-                    <div className="flex-1 space-y-4 text-left min-w-0">
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-wider text-slate-400 font-body">Name</p>
-                        <p className="mt-1 text-slate-900 font-body">{user.name}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-wider text-slate-400 font-body">Email</p>
-                        <p className="mt-1 text-slate-900 font-body">{user.email}</p>
-                      </div>
-                    </div>
-                    <div className="shrink-0 w-24 h-24 rounded-full bg-gradient-to-br from-coral/20 to-coral/40 flex items-center justify-center">
-                      <span className="text-3xl font-display font-bold text-coral/80">
-                        {user.name
-                          .split(/\s+/)
-                          .map((s) => s[0])
-                          .join("")
-                          .toUpperCase()
-                          .slice(0, 2) || "?"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="pt-6 mt-6 border-t border-slate-200">
-                    <Button variant="coral" size="xl" asChild className="w-full">
-                      <Link href={logout().url} method="post" as="button">
-                        Log out
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              </DialogDescription>
-            </DialogHeader>
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   )
 }

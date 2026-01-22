@@ -1,6 +1,10 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 
+import { AccountButton } from '@/components/account-button';
 import { RogerThatGame } from '@/components/roger-that-game';
+import { Button } from '@/components/ui/button';
+import { type SharedData } from '@/types';
+import { history, register } from '@/routes';
 
 interface GameSettings {
     SUBTITLES: string[];
@@ -26,8 +30,9 @@ interface GamePageProps {
 }
 
 export default function Game() {
-    const pageProps = usePage().props as unknown as GamePageProps;
-    const { subjects, gameDate, guessUrl, previousGameUrl, settings, noGame, canonicalUrl, appUrl } = pageProps;
+    const pageProps = usePage<SharedData>().props as unknown as GamePageProps & SharedData;
+    const { subjects, gameDate, guessUrl, previousGameUrl, settings, noGame, canonicalUrl, appUrl, auth } = pageProps;
+    const user = auth?.user;
 
     const isToday = gameDate === new Date().toISOString().split('T')[0];
     const formattedDate = new Date(gameDate).toLocaleDateString('en-US', {
@@ -105,24 +110,47 @@ export default function Game() {
             </Head>
             <main className="min-h-screen bg-eggplant-pattern flex items-center justify-center p-4">
                 {noGame ? (
-                    <div className="bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-8 md:p-10 max-w-2xl w-full text-center">
-                        <h1 className="font-display text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-4">
-                            Roger That
-                        </h1>
-                        <p className="text-slate-500 font-body text-lg mb-6">
-                            No game for today
-                        </p>
-                        <p className="text-slate-400 font-body text-sm mb-8">
-                            Check back later or play a previous game!
-                        </p>
-                        {previousGameUrl && (
-                            <a
-                                href={previousGameUrl}
-                                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-coral text-white shadow-xs hover:bg-coral/90 px-6 py-3 text-base font-display font-bold hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-coral focus:ring-offset-2 transition-transform"
-                            >
-                                Play Previous Game
-                            </a>
-                        )}
+                    <div className="w-full max-w-lg">
+                        <div className="bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-8 md:p-10 relative">
+                            <AccountButton />
+
+                        <div className="text-center mb-8">
+                            <h1 className="font-display text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
+                                Roger That
+                            </h1>
+                            <p className="mt-2 text-slate-500 font-body text-sm md:text-base italic">
+                                No game for today
+                            </p>
+                            <div className="text-4xl my-4">😔</div>
+                            <p className="text-slate-400 font-body text-sm mb-8">
+                                Check back later or play a previous game!
+                            </p>
+                            <div className="flex flex-col gap-4 w-full">
+                                {!user && (
+                                    <Button
+                                        asChild
+                                        variant="coral"
+                                        size="xl"
+                                        className="w-full"
+                                    >
+                                        <Link href={register().url}>
+                                            Notify me
+                                        </Link>
+                                    </Button>
+                                )}
+                                <Button
+                                    asChild
+                                    variant="outline"
+                                    size="xl"
+                                    className="w-full border-2 border-coral text-coral bg-white hover:bg-slate-50 hover:text-coral rounded-xl font-display font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                                >
+                                    <Link href={history().url}>
+                                        Play previous games
+                                    </Link>
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
                     </div>
                 ) : (
                     <RogerThatGame

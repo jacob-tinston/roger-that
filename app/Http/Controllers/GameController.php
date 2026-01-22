@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Celebrity;
 use App\Models\DailyGame;
+use App\Models\GamesPlayed;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -142,6 +145,13 @@ class GameController extends Controller
                 'tagline' => $a->tagline ?? '',
                 'photo_url' => $a->photo_url,
             ];
+
+            // Track the game as played
+            GamesPlayed::create([
+                'game_id' => $game->id,
+                'user_id' => auth()->id(),
+                'success' => $correct,
+            ]);
         }
         if ($gameOver) {
             $payload['gameOver'] = true;
@@ -176,8 +186,64 @@ class GameController extends Controller
                 ];
             });
 
+        $femaleCelebrities = Celebrity::query()
+            ->where('gender', 'female')
+            ->orderBy('name')
+            ->get()
+            ->map(function ($celebrity) {
+                return [
+                    'id' => $celebrity->id,
+                    'name' => $celebrity->name,
+                    'year' => $celebrity->birth_year,
+                    'tagline' => $celebrity->tagline ?? '',
+                    'photo_url' => $celebrity->photo_url,
+                ];
+            });
+
+        $totalGamesPlayed = GamesPlayed::count();
+        $totalWins = GamesPlayed::where('success', true)->count();
+        $winRate = $totalGamesPlayed > 0 ? round(($totalWins / $totalGamesPlayed) * 100, 1) : 0;
+
+        $stats = [
+            'totalGames' => DailyGame::where('game_date', '<=', today())->count(),
+            'gamesPlayed' => $totalGamesPlayed,
+            'winRate' => $winRate,
+            'totalUsers' => User::count(),
+        ];
+
         return Inertia::render('dashboard', [
             'games' => $games->values()->all(),
+            'femaleCelebrities' => $femaleCelebrities->values()->all(),
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Show paginated list of all previous games.
+     */
+    public function history(Request $request): Response
+    {
+        $games = DailyGame::query()
+            ->where('game_date', '<=', today())
+            ->with('subjects')
+            ->orderByDesc('game_date')
+            ->paginate(5)
+            ->through(function ($game) {
+                return [
+                    'id' => $game->id,
+                    'date' => $game->game_date->toDateString(),
+                    'formatted_date' => $game->game_date->format('F j, Y'),
+                    'subjects' => $game->subjects->map(fn ($subject) => [
+                        'id' => $subject->id,
+                        'name' => $subject->name,
+                        'photo_url' => $subject->photo_url,
+                    ])->all(),
+                    'url' => route('game', ['date' => $game->game_date->format('Y-m-d')]),
+                ];
+            });
+
+        return Inertia::render('history', [
+            'games' => $games,
         ]);
     }
 }

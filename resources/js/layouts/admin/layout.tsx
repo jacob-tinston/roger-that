@@ -26,8 +26,8 @@ export default function AdminLayout({
                         <Heading title={title} description={description} />
 
                         <div className="flex flex-col">
-                            <div className="flex-1 md:max-w-4xl">
-                                <section className="max-w-4xl space-y-12">
+                            <div className="flex-1">
+                                <section className="space-y-12">
                                     {children}
                                 </section>
                             </div>
