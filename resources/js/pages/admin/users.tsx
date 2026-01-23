@@ -73,9 +73,29 @@ export default function Users() {
             .slice(0, 2);
     };
 
+    const title = 'Users';
+    const description = 'View and manage all users registered on Celebrity Sh*ggers. See user roles, verification status, and account details.';
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const ogImage = typeof window !== 'undefined' ? `${window.location.origin}/logo.png` : undefined;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Users" />
+            <Head title={title}>
+                <meta name="description" content={description} />
+                {currentUrl && <link rel="canonical" href={currentUrl} />}
+
+                {/* Open Graph / Facebook */}
+                {currentUrl && <meta property="og:url" content={currentUrl} />}
+                <meta property="og:title" content={title} />
+                <meta property="og:description" content={description} />
+                {ogImage && <meta property="og:image" content={ogImage} />}
+
+                {/* Twitter */}
+                {currentUrl && <meta name="twitter:url" content={currentUrl} />}
+                <meta name="twitter:title" content={title} />
+                <meta name="twitter:description" content={description} />
+                {ogImage && <meta name="twitter:image" content={ogImage} />}
+            </Head>
             <AdminLayout title="Users" description="View and manage all users">
                 <div className="space-y-4">
                     <div className="relative">

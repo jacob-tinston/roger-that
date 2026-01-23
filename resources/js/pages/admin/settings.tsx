@@ -95,9 +95,29 @@ export default function Settings({ settings }: { settings: Settings }) {
         });
     };
 
+    const title = 'Settings';
+    const description = 'Manage Celebrity Sh*ggers game settings, prompts, captions, and reactions from the admin panel.';
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const ogImage = typeof window !== 'undefined' ? `${window.location.origin}/logo.png` : undefined;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Settings" />
+            <Head title={title}>
+                <meta name="description" content={description} />
+                {currentUrl && <link rel="canonical" href={currentUrl} />}
+
+                {/* Open Graph / Facebook */}
+                {currentUrl && <meta property="og:url" content={currentUrl} />}
+                <meta property="og:title" content={title} />
+                <meta property="og:description" content={description} />
+                {ogImage && <meta property="og:image" content={ogImage} />}
+
+                {/* Twitter */}
+                {currentUrl && <meta name="twitter:url" content={currentUrl} />}
+                <meta name="twitter:title" content={title} />
+                <meta name="twitter:description" content={description} />
+                {ogImage && <meta name="twitter:image" content={ogImage} />}
+            </Head>
 
             <AdminLayout title="Settings" description="Manage game settings and prompts">
                 <div className="space-y-12">
@@ -440,7 +460,6 @@ export default function Settings({ settings }: { settings: Settings }) {
                                     <div className="flex items-center gap-4">
                                         <Button
                                             variant="coral"
-                                            size="xl"
                                             disabled={processing}
                                         >
                                             Save

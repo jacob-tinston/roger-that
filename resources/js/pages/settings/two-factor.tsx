@@ -41,9 +41,29 @@ export default function TwoFactor({
     } = useTwoFactorAuth();
     const [showSetupModal, setShowSetupModal] = useState<boolean>(false);
 
+    const title = 'Two-Factor Authentication';
+    const description = 'Enable or disable two-factor authentication for your Celebrity Sh*ggers account to add an extra layer of security.';
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const ogImage = typeof window !== 'undefined' ? `${window.location.origin}/logo.png` : undefined;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Two-Factor Authentication" />
+            <Head title={title}>
+                <meta name="description" content={description} />
+                {currentUrl && <link rel="canonical" href={currentUrl} />}
+
+                {/* Open Graph / Facebook */}
+                {currentUrl && <meta property="og:url" content={currentUrl} />}
+                <meta property="og:title" content={title} />
+                <meta property="og:description" content={description} />
+                {ogImage && <meta property="og:image" content={ogImage} />}
+
+                {/* Twitter */}
+                {currentUrl && <meta name="twitter:url" content={currentUrl} />}
+                <meta name="twitter:title" content={title} />
+                <meta name="twitter:description" content={description} />
+                {ogImage && <meta name="twitter:image" content={ogImage} />}
+            </Head>
 
             <h1 className="sr-only">Two-Factor Authentication Settings</h1>
 
@@ -74,7 +94,6 @@ export default function TwoFactor({
                                     {({ processing }) => (
                                         <Button
                                             variant="destructive"
-                                            size="xl"
                                             type="submit"
                                             disabled={processing}
                                             className="rounded-xl font-display font-bold"
@@ -115,7 +134,6 @@ export default function TwoFactor({
                                         {({ processing }) => (
                                             <Button
                                                 variant="coral"
-                                                size="xl"
                                                 type="submit"
                                                 disabled={processing}
                                             >

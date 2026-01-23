@@ -1,10 +1,11 @@
 import { Head, Link, usePage } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
 
 import { AccountButton } from '@/components/account-button';
 import { RogerThatGame } from '@/components/roger-that-game';
 import { Button } from '@/components/ui/button';
 import { type SharedData } from '@/types';
-import { history, register } from '@/routes';
+import { history, home, register } from '@/routes';
 
 interface GameSettings {
     SUBTITLES: string[];
@@ -42,14 +43,14 @@ export default function Game() {
     });
 
     const title = isToday
-        ? 'Celebrity Whodunnit?'
-        : `Celebrity Whodunnit? | ${formattedDate}`;
+        ? 'The Daily Celebrity Sh*ggers Game'
+        : `Celebrity Sh*ggers Game - ${formattedDate}`;
     const description = isToday
-        ? "One man. Four women. Five guesses. Guess the guy who's Rogered all 4 celebrities! Play the daily Roger That game."
-        : `Play the Roger That game from ${formattedDate}. One man. Four women. Five guesses. Guess the guy who's Rogered all 4 celebrities!`;
+        ? "One man. Four women. Five guesses. Guess the guy who's Rogered all 4 celebrities! Play the Daily Celebrity Sh*ggers Game."
+        : `Missed the action? See who got Rogered in this past game of Celebrity Sh*ggers and relive all the messy hookups and cheeky encounters.`;
 
-    const currentUrl = canonicalUrl || (appUrl ? `${appUrl}/daily/${gameDate}` : '');
-    const ogImage = appUrl ? `${appUrl}/logo.png` : undefined;
+    const currentUrl = canonicalUrl || (appUrl ? `${appUrl}/daily/${gameDate}` : typeof window !== 'undefined' ? `${window.location.origin}/daily/${gameDate}` : '');
+    const ogImage = appUrl ? `${appUrl}/logo.png` : typeof window !== 'undefined' ? `${window.location.origin}/logo.png` : undefined;
 
     return (
         <>
@@ -58,24 +59,16 @@ export default function Game() {
                 {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
 
                 {/* Open Graph / Facebook */}
-                <meta property="og:type" content="website" />
-                <meta property="og:url" content={currentUrl} />
+                {currentUrl && <meta property="og:url" content={currentUrl} />}
                 <meta property="og:title" content={title} />
                 <meta property="og:description" content={description} />
                 {ogImage && <meta property="og:image" content={ogImage} />}
-                <meta property="og:site_name" content="Roger That" />
 
                 {/* Twitter */}
-                <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:url" content={currentUrl} />
+                {currentUrl && <meta name="twitter:url" content={currentUrl} />}
                 <meta name="twitter:title" content={title} />
                 <meta name="twitter:description" content={description} />
                 {ogImage && <meta name="twitter:image" content={ogImage} />}
-
-                {/* Additional SEO */}
-                <meta name="robots" content="index, follow" />
-                <meta name="author" content="Roger That" />
-                <meta name="theme-color" content="#FFFFFF" />
 
                 {/* Structured Data */}
                 {!noGame && subjects && (
@@ -101,51 +94,48 @@ export default function Game() {
                         }}
                     />
                 )}
-
-                <link rel="preconnect" href="https://fonts.bunny.net" />
-                <link
-                    href="https://fonts.bunny.net/css?family=poppins:400,600,700,800,900&family=inter:400,500,600"
-                    rel="stylesheet"
-                />
             </Head>
             <main className="min-h-screen bg-eggplant-pattern flex items-center justify-center p-4">
                 {noGame ? (
                     <div className="w-full max-w-lg">
                         <div className="bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-8 md:p-10 relative">
+                            <Link
+                                href={home().url}
+                                className="absolute top-4 left-4 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
+                                aria-label="Back to homepage"
+                            >
+                                <ArrowLeft className="w-5 h-5" />
+                            </Link>
                             <AccountButton />
 
-                        <div className="text-center mb-8">
+                        <div className="text-center">
                             <h1 className="font-display text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
                                 Roger That
                             </h1>
                             <p className="mt-2 text-slate-500 font-body text-sm md:text-base italic">
-                                No game for today
+                                No Action… Yet.
                             </p>
                             <div className="text-4xl my-4">😔</div>
                             <p className="text-slate-400 font-body text-sm mb-8">
-                                Check back later or play a previous game!
+                                Looks like today's scandal hasn't arrived. Come back later and see who's getting Rogered next.
                             </p>
                             <div className="flex flex-col gap-4 w-full">
                                 {!user && (
                                     <Button
                                         asChild
                                         variant="coral"
-                                        size="xl"
-                                        className="w-full"
                                     >
                                         <Link href={register().url}>
-                                            Notify me
+                                         Notify me of the next Rogering
                                         </Link>
                                     </Button>
                                 )}
                                 <Button
                                     asChild
-                                    variant="outline"
-                                    size="xl"
-                                    className="w-full border-2 border-coral text-coral bg-white hover:bg-slate-50 hover:text-coral rounded-xl font-display font-bold hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                                    variant="secondary"
                                 >
                                     <Link href={history().url}>
-                                        Play previous games
+                                        View past games
                                     </Link>
                                 </Button>
                             </div>

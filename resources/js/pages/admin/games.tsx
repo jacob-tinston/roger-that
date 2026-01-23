@@ -74,9 +74,29 @@ export default function Games() {
         });
     };
 
+    const title = 'Games';
+    const description = 'Manage all Celebrity Sh*ggers games. View, search, and delete games from the admin panel.';
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const ogImage = typeof window !== 'undefined' ? `${window.location.origin}/logo.png` : undefined;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Games" />
+            <Head title={title}>
+                <meta name="description" content={description} />
+                {currentUrl && <link rel="canonical" href={currentUrl} />}
+
+                {/* Open Graph / Facebook */}
+                {currentUrl && <meta property="og:url" content={currentUrl} />}
+                <meta property="og:title" content={title} />
+                <meta property="og:description" content={description} />
+                {ogImage && <meta property="og:image" content={ogImage} />}
+
+                {/* Twitter */}
+                {currentUrl && <meta name="twitter:url" content={currentUrl} />}
+                <meta name="twitter:title" content={title} />
+                <meta name="twitter:description" content={description} />
+                {ogImage && <meta name="twitter:image" content={ogImage} />}
+            </Head>
             <AdminLayout title="Games" description="View and manage all games">
                 <div className="space-y-4">
                     <div className="relative">
@@ -177,10 +197,11 @@ export default function Games() {
                                                             </DialogDescription>
                                                             <DialogFooter className="gap-2">
                                                                 <DialogClose asChild>
-                                                                    <Button variant="secondary">Cancel</Button>
+                                                                    <Button variant="secondary" size="sm">Cancel</Button>
                                                                 </DialogClose>
                                                                 <Button
                                                                     variant="destructive"
+                                                                    size="sm"
                                                                     onClick={() => {
                                                                         handleDelete(game.id);
                                                                     }}

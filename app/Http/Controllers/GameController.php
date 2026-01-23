@@ -16,6 +16,14 @@ use Inertia\Response;
 class GameController extends Controller
 {
     /**
+     * Show the homepage.
+     */
+    public function home(): Response
+    {
+        return Inertia::render('home');
+    }
+
+    /**
      * Show the daily game. For today, shows "no game" message if none exists; for a specific date, 404 if missing.
      * Passes subjects to the frontend (answer is never sent) and previousGameUrl when an earlier game exists.
      */

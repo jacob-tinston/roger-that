@@ -1,7 +1,7 @@
 import { Link, usePage } from "@inertiajs/react"
 import { useState, useEffect } from "react"
 import { ChevronLeft, HelpCircle } from "lucide-react"
-import { history } from "@/routes"
+import { history, register } from "@/routes"
 import { type SharedData } from "@/types"
 import { AccountButton } from "./account-button"
 import { CelebrityCard } from "./celebrity-card"
@@ -293,10 +293,25 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
             {resultSubCaption && (
               <p className="mt-2 text-slate-400 font-body text-sm">{resultSubCaption}</p>
             )}
-            <div className="mt-8">
-              <Button variant="coral" size="xl" asChild className="gap-2">
+            <div className="mt-8 space-y-4">
+              {user ? (
+                previousGameUrl ? (
+                  <Button variant="coral" asChild>
+                    <Link href={previousGameUrl}>
+                      Keep the action going
+                    </Link>
+                  </Button>
+                ) : null
+              ) : (
+                <Button variant="coral" asChild>
+                  <Link href={register().url}>
+                    Notify me of the next Rogering
+                  </Link>
+                </Button>
+              )}
+              <Button variant="secondary" asChild>
                 <Link href={history().url}>
-                  Play previous games
+                  View past games
                 </Link>
               </Button>
             </div>
@@ -312,10 +327,25 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
             {resultSubCaption && (
               <p className="mt-2 text-slate-400 font-body text-sm">{resultSubCaption}</p>
             )}
-            <div className="mt-8">
-              <Button variant="coral" size="xl" asChild className="gap-2">
+            <div className="mt-8 space-y-4">
+              {user ? (
+                previousGameUrl ? (
+                  <Button variant="coral" asChild>
+                    <Link href={previousGameUrl}>
+                      Keep the action going
+                    </Link>
+                  </Button>
+                ) : null
+              ) : (
+                <Button variant="coral" asChild>
+                  <Link href={register().url}>
+                    Notify me of the next Rogering
+                  </Link>
+                </Button>
+              )}
+              <Button variant="secondary" asChild>
                 <Link href={history().url}>
-                  Play previous games
+                  View past games
                 </Link>
               </Button>
             </div>
@@ -333,19 +363,19 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
             <DialogDescription className="text-left mt-4">
               <div className="space-y-4 text-slate-600 font-body text-sm md:text-base">
                 <p>
-                  <strong className="text-slate-900 font-semibold font-body">The mission:</strong> Figure out which man connects all four women. You've got five guesses. Make them count.
+                  <strong className="text-slate-900 font-semibold font-body">Meet the Ladies:</strong> You'll be shown four women. Different careers, different vibes… one thing in common. Someone's been busy.
                 </p>
                 <p>
-                  <strong className="text-slate-900 font-semibold font-body">The cards:</strong> Hover over those celebrity cards to see their hints. They're not just there for decoration, you know.
+                  <strong className="text-slate-900 font-semibold font-body">Spot the Culprit:</strong> Your job is to figure out which man has Rogered all four. Use gossip, pop culture, collaborations, and your questionable instincts.
                 </p>
                 <p>
-                  <strong className="text-slate-900 font-semibold font-body">The guess:</strong> Type in a name and hit that button. We'll let you know if you're on the right track or completely off base.
+                  <strong className="text-slate-900 font-semibold font-body">Take your Shot:</strong> You get five guesses. Each one brings you closer to the truth—or deeper into regret.
                 </p>
                 <p>
-                  <strong className="text-slate-900 font-semibold font-body">The dots:</strong> Those little circles? That's your remaining guesses. Watch them disappear as you swing and miss.
+                  <strong className="text-slate-900 font-semibold font-body">Nail It or Walk Away:</strong> Guess right and enjoy the bragging rights. Guess wrong and watch the rogue slip away… until tomorrow.
                 </p>
                 <p className="text-sm italic text-slate-500 pt-2">
-                  Pro tip: The answer is probably more obvious than you think. Or less. Who knows? Good luck, detective.
+                  Pro tip: Think red carpets, late nights, “just friends,” and suspiciously well-timed breakups. The clues are there if you know where to look.
                 </p>
               </div>
             </DialogDescription>

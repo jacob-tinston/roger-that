@@ -70,7 +70,7 @@ export function AccountButton() {
                                     </div>
                                 </div>
                                 <div className="pt-6 mt-6 border-t border-slate-200">
-                                    <Button variant="coral" size="xl" asChild className="w-full">
+                                    <Button variant="coral" asChild>
                                         <Link href={logout().url} method="post" as="button">
                                             Log out
                                         </Link>

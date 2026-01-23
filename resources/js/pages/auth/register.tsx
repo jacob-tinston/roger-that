@@ -11,12 +11,32 @@ import { login } from '@/routes';
 import { store } from '@/routes/register';
 
 export default function Register() {
+    const title = 'Sign Up';
+    const description = "Join the playground of tabloid chaos. Sign up to play Celebrity Sh*ggers, track past mischief, and prove you've got what it takes to spot the ultimate celebrity heartbreaker.";
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const ogImage = typeof window !== 'undefined' ? `${window.location.origin}/logo.png` : undefined;
+
     return (
         <AuthLayout
             title="Sign Up"
-            description="Enter your details below to create your account"
+            description="Ready to join the hookups and headlines?"
         >
-            <Head title="Sign Up" />
+            <Head title={title}>
+                <meta name="description" content={description} />
+                {currentUrl && <link rel="canonical" href={currentUrl} />}
+
+                {/* Open Graph / Facebook */}
+                {currentUrl && <meta property="og:url" content={currentUrl} />}
+                <meta property="og:title" content={title} />
+                <meta property="og:description" content={description} />
+                {ogImage && <meta property="og:image" content={ogImage} />}
+
+                {/* Twitter */}
+                {currentUrl && <meta name="twitter:url" content={currentUrl} />}
+                <meta name="twitter:title" content={title} />
+                <meta name="twitter:description" content={description} />
+                {ogImage && <meta name="twitter:image" content={ogImage} />}
+            </Head>
             <Form
                 action={store()}
                 resetOnSuccess={['password', 'password_confirmation']}
@@ -93,7 +113,6 @@ export default function Register() {
                             <Button
                                 type="submit"
                                 variant="coral"
-                                size="xl"
                                 className="mt-2 w-full"
                                 tabIndex={5}
                                 data-test="register-user-button"

@@ -12,12 +12,32 @@ import { login } from '@/routes';
 import { email } from '@/routes/password';
 
 export default function ForgotPassword({ status }: { status?: string }) {
+    const title = 'Forgot Password';
+    const description = 'Lost your key to the chaos? Reset your password and get back to playing Celebrity Sh*ggers—where the hookups are hot, the gossip is juicy, and the game never sleeps.';
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const ogImage = typeof window !== 'undefined' ? `${window.location.origin}/logo.png` : undefined;
+
     return (
         <AuthLayout
             title="Forgot Password"
-            description="Enter your email to receive a password reset link"
+            description="Enter your email to get back to the scandal"
         >
-            <Head title="Forgot Password" />
+            <Head title={title}>
+                <meta name="description" content={description} />
+                {currentUrl && <link rel="canonical" href={currentUrl} />}
+
+                {/* Open Graph / Facebook */}
+                {currentUrl && <meta property="og:url" content={currentUrl} />}
+                <meta property="og:title" content={title} />
+                <meta property="og:description" content={description} />
+                {ogImage && <meta property="og:image" content={ogImage} />}
+
+                {/* Twitter */}
+                {currentUrl && <meta name="twitter:url" content={currentUrl} />}
+                <meta name="twitter:title" content={title} />
+                <meta name="twitter:description" content={description} />
+                {ogImage && <meta name="twitter:image" content={ogImage} />}
+            </Head>
 
             {status && (
                 <div className="mb-4 text-center text-sm font-medium text-emerald-600 font-body">
@@ -46,8 +66,6 @@ export default function ForgotPassword({ status }: { status?: string }) {
                             <div className="my-6 flex items-center justify-start">
                                 <Button
                                     variant="coral"
-                                    size="xl"
-                                    className="w-full"
                                     disabled={processing}
                                     data-test="email-password-reset-link-button"
                                 >

@@ -14,12 +14,32 @@ interface ResetPasswordProps {
 }
 
 export default function ResetPassword({ token, email }: ResetPasswordProps) {
+    const title = 'Reset Password';
+    const description = 'Set a new password for your Celebrity Sh*ggers account. Choose a strong password to keep your account secure.';
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const ogImage = typeof window !== 'undefined' ? `${window.location.origin}/logo.png` : undefined;
+
     return (
         <AuthLayout
             title="Reset Password"
             description="Please enter your new password below"
         >
-            <Head title="Reset Password" />
+            <Head title={title}>
+                <meta name="description" content={description} />
+                {currentUrl && <link rel="canonical" href={currentUrl} />}
+
+                {/* Open Graph / Facebook */}
+                {currentUrl && <meta property="og:url" content={currentUrl} />}
+                <meta property="og:title" content={title} />
+                <meta property="og:description" content={description} />
+                {ogImage && <meta property="og:image" content={ogImage} />}
+
+                {/* Twitter */}
+                {currentUrl && <meta name="twitter:url" content={currentUrl} />}
+                <meta name="twitter:title" content={title} />
+                <meta name="twitter:description" content={description} />
+                {ogImage && <meta name="twitter:image" content={ogImage} />}
+            </Head>
 
             <Form
                 action={update()}
@@ -80,7 +100,6 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                         <Button
                             type="submit"
                             variant="coral"
-                            size="xl"
                             className="mt-4 w-full"
                             disabled={processing}
                             data-test="reset-password-button"

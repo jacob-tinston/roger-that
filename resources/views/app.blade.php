@@ -23,9 +23,6 @@
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
-        {{-- Default meta description (can be overridden by Inertia Head) --}}
-        <meta name="description" content="Roger That - Daily celebrity guessing game. One man. Four women. Five guesses. Guess the guy who's Rogered all 4 celebrities!" />
-
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -33,6 +30,19 @@
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=poppins:400,600,700,800,900&family=inter:400,500,600" rel="stylesheet" />
+
+        {{-- Global SEO Meta Tags --}}
+        @if(request()->is('admin*'))
+            <meta name="robots" content="noindex, nofollow" />
+        @else
+            <meta name="robots" content="index, follow" />
+        @endif
+        <meta name="author" content="Roger That" />
+        <meta name="theme-color" content="#FFFFFF" />
+        <meta property="og:site_name" content="Roger That" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
 
         @viteReactRefresh
         @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])

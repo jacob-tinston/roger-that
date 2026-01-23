@@ -14,6 +14,7 @@ export default function AdminLayout({
     return (
         <>
             <Head>
+                <meta name="robots" content="noindex, nofollow" />
                 <link rel="preconnect" href="https://fonts.bunny.net" />
                 <link
                     href="https://fonts.bunny.net/css?family=poppins:400,600,700,800,900&family=inter:400,500,600"

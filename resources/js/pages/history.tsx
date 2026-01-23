@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { AccountButton } from '@/components/account-button';
 import { Button } from '@/components/ui/button';
@@ -48,19 +48,42 @@ function getInitials(name: string): string {
 export default function History() {
     const { games } = usePage<HistoryPageProps>().props;
 
+    const title = 'Past Celebrity Sh*ggers Games';
+    const description = "Missed a scandal? Browse past games of Celebrity Sh*ggers and see which men left a trail of chaos across Hollywood's most tempting four-somes.";
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const ogImage = typeof window !== 'undefined' ? `${window.location.origin}/logo.png` : undefined;
 
     return (
         <>
-            <Head title="Game History">
-                <link rel="preconnect" href="https://fonts.bunny.net" />
-                <link
-                    href="https://fonts.bunny.net/css?family=poppins:400,600,700,800,900&family=inter:400,500,600"
-                    rel="stylesheet"
+            <Head title={title}>
+                <meta
+                    name="description"
+                    content="Missed a scandal? Browse past games of Celebrity Sh*ggers and see which men left a trail of chaos across Hollywood’s most tempting four-somes."
                 />
+                {currentUrl && <link rel="canonical" href={currentUrl} />}
+
+                {/* Open Graph / Facebook */}
+                {currentUrl && <meta property="og:url" content={currentUrl} />}
+                <meta property="og:title" content={title} />
+                <meta property="og:description" content={description} />
+                {ogImage && <meta property="og:image" content={ogImage} />}
+
+                {/* Twitter */}
+                {currentUrl && <meta name="twitter:url" content={currentUrl} />}
+                <meta name="twitter:title" content={title} />
+                <meta name="twitter:description" content={description} />
+                {ogImage && <meta name="twitter:image" content={ogImage} />}
             </Head>
             <main className="min-h-screen bg-eggplant-pattern flex items-center justify-center p-4">
                 <div className="w-full max-w-lg">
                     <div className="bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-8 md:p-10 relative">
+                        <Link
+                            href="/"
+                            className="absolute top-4 left-4 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
+                            aria-label="Back to homepage"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </Link>
                         <AccountButton />
 
                         <div className="text-center mb-6">
@@ -68,7 +91,7 @@ export default function History() {
                                 Roger That
                             </h1>
                             <p className="mt-2 text-slate-500 font-body text-sm md:text-base italic">
-                                Game History
+                                Red carpet rendezvous you missed
                             </p>
                         </div>
 
@@ -162,7 +185,7 @@ export default function History() {
                         )}
 
                         <div className="pt-6">
-                            <Button variant="coral" size="xl" asChild className="w-full">
+                            <Button variant="coral" asChild>
                                 <Link href={game().url}>
                                     Play today's game
                                 </Link>

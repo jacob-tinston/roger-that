@@ -51,9 +51,30 @@ interface DashboardPageProps {
 export default function Dashboard() {
     const { games, femaleCelebrities, stats } = usePage<DashboardPageProps>().props;
 
+    const title = 'Dashboard - Previous Games';
+    const description = 'Admin dashboard for Celebrity Sh*ggers. View game statistics, recent games, and manage the application.';
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const ogImage = typeof window !== 'undefined' ? `${window.location.origin}/logo.png` : undefined;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Dashboard - Previous Games" />
+            <Head title={title}>
+                <meta name="robots" content="noindex, nofollow" />
+                <meta name="description" content={description} />
+                {currentUrl && <link rel="canonical" href={currentUrl} />}
+
+                {/* Open Graph / Facebook */}
+                {currentUrl && <meta property="og:url" content={currentUrl} />}
+                <meta property="og:title" content={title} />
+                <meta property="og:description" content={description} />
+                {ogImage && <meta property="og:image" content={ogImage} />}
+
+                {/* Twitter */}
+                {currentUrl && <meta name="twitter:url" content={currentUrl} />}
+                <meta name="twitter:title" content={title} />
+                <meta name="twitter:description" content={description} />
+                {ogImage && <meta name="twitter:image" content={ogImage} />}
+            </Head>
             <div className="min-h-screen bg-eggplant-pattern p-4">
                 <div className="bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-8 md:p-10 relative overflow-hidden">
                     <div className="px-4 py-6">

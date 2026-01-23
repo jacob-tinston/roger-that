@@ -89,6 +89,7 @@ export default function DeleteUser() {
                                         <DialogClose asChild>
                                             <Button
                                                 variant="secondary"
+                                                size="sm"
                                                 onClick={() =>
                                                     resetAndClearErrors()
                                                 }
@@ -99,6 +100,7 @@ export default function DeleteUser() {
 
                                         <Button
                                             variant="destructive"
+                                            size="sm"
                                             disabled={processing}
                                             asChild
                                         >
