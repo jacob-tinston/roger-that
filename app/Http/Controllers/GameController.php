@@ -8,6 +8,7 @@ use App\Models\GamesPlayed;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -161,7 +162,7 @@ class GameController extends Controller
     }
 
     /**
-     * Show all previous games for the dashboard.
+     * Show recent games for the dashboard (9 most recent).
      */
     public function dashboard(): Response
     {
@@ -169,6 +170,7 @@ class GameController extends Controller
             ->where('game_date', '<=', today())
             ->with(['answer', 'subjects'])
             ->orderByDesc('game_date')
+            ->limit(9)
             ->get()
             ->map(function ($game) {
                 return [
@@ -245,5 +247,51 @@ class GameController extends Controller
         return Inertia::render('history', [
             'games' => $games,
         ]);
+    }
+
+    /**
+     * Show all games in a searchable table format.
+     */
+    public function games(): Response
+    {
+        $games = DailyGame::query()
+            ->where('game_date', '<=', today())
+            ->with(['answer', 'subjects'])
+            ->orderByDesc('game_date')
+            ->get()
+            ->map(function ($game) {
+                return [
+                    'id' => $game->id,
+                    'date' => $game->game_date->toDateString(),
+                    'formatted_date' => $game->game_date->format('F j, Y'),
+                    'answer' => $game->answer ? [
+                        'name' => $game->answer->name,
+                        'year' => $game->answer->birth_year,
+                    ] : null,
+                    'subjects' => $game->subjects->map(fn ($subject) => $subject->name)->all(),
+                    'url' => route('game', ['date' => $game->game_date->format('Y-m-d')]),
+                ];
+            });
+
+        return Inertia::render('admin/games', [
+            'games' => $games->values()->all(),
+        ]);
+    }
+
+    /**
+     * Delete a daily game.
+     */
+    public function destroy(DailyGame $game): RedirectResponse
+    {
+        // Delete associated games played records
+        GamesPlayed::where('game_id', $game->id)->delete();
+
+        // Detach subjects (pivot table relationships)
+        $game->subjects()->detach();
+
+        // Delete the game (answer_id is just a foreign key, celebrities remain)
+        $game->delete();
+
+        return redirect()->route('dashboard')->with('success', 'Game deleted successfully.');
     }
 }

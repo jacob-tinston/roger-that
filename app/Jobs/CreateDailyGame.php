@@ -10,11 +10,21 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class CreateDailyGame implements ShouldQueue
 {
     use Queueable;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct(
+        private ?Carbon $gameDate = null
+    ) {
+        $this->gameDate ??= Carbon::today();
+    }
 
     private function systemPrompt(): string
     {
@@ -192,7 +202,7 @@ class CreateDailyGame implements ShouldQueue
 
     public function handle(): void
     {
-        $gameDate = Carbon::today();
+        $gameDate = $this->gameDate;
         $maxRetries = 5;
 
         $excludeNames = DailyGame::query()
@@ -212,11 +222,10 @@ class CreateDailyGame implements ShouldQueue
         $attempt = 0;
 
         while ($attempt < $maxRetries) {
+            $attempt++;
             $data = $this->fetchGameFromAi($excludeNames);
 
             if ($data === null) {
-                $attempt++;
-
                 continue;
             }
 
@@ -227,7 +236,6 @@ class CreateDailyGame implements ShouldQueue
             }
 
             $excludeNames = array_unique(array_merge($excludeNames, $namesWithoutImages));
-            $attempt++;
         }
 
         if ($data === null) {
@@ -271,5 +279,7 @@ class CreateDailyGame implements ShouldQueue
         );
 
         $game->subjects()->sync($subjectIds);
+
+        Log::info("Daily game for '{$gameDate->toDateString()}' created successfully after {$attempt} attempt(s).");
     }
 }

@@ -113,7 +113,7 @@ export default function Dashboard() {
                             </div>
 
                             <div>
-                                <Heading title="Previous Games" description="Browse and replay all previous daily games" />
+                                <Heading title="Recent Games" description="The 9 most recent daily games" />
                                 <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
                         <div>
                             {games.length === 0 ? (
