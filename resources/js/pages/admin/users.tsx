@@ -171,7 +171,7 @@ export default function Users() {
                                                         {user.role.name}
                                                     </Badge>
                                                 ) : (
-                                                    <span className="text-sm text-slate-400 font-body">—</span>
+                                                    <span className="text-sm text-slate-400 font-body"> - </span>
                                                 )}
                                             </td>
                                             <td className="px-4 py-3">

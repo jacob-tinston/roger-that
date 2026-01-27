@@ -32,6 +32,12 @@ class OpenAiProvider implements AiProvider
             throw new \RuntimeException('OpenAI response had no content');
         }
 
+        Log::info('OpenAiProvider: AI response received', [
+            'model' => $model,
+            'response_length' => strlen($content),
+            'response_content' => $content,
+        ]);
+
         return $content;
     }
 }

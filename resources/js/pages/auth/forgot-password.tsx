@@ -13,7 +13,7 @@ import { email } from '@/routes/password';
 
 export default function ForgotPassword({ status }: { status?: string }) {
     const title = 'Forgot Password';
-    const description = 'Lost your key to the chaos? Reset your password and get back to playing Celebrity Sh*ggers—where the hookups are hot, the gossip is juicy, and the game never sleeps.';
+    const description = 'Lost your key to the chaos? Reset your password and get back to playing Celebrity Sh*ggers - where the hookups are hot, the gossip is juicy, and the game never sleeps.';
     const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
     const ogImage = typeof window !== 'undefined' ? `${window.location.origin}/logo.png` : undefined;
 

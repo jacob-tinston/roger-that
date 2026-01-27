@@ -160,7 +160,7 @@ export default function Games() {
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-sm text-slate-400 font-body">—</span>
+                                                    <span className="text-sm text-slate-400 font-body"> - </span>
                                                 )}
                                             </td>
                                             <td className="px-4 py-3">
@@ -168,7 +168,7 @@ export default function Games() {
                                                     {game.subjects.length > 0 ? (
                                                         <span>{game.subjects.join(', ')}</span>
                                                     ) : (
-                                                        <span className="text-slate-400">—</span>
+                                                        <span className="text-slate-400"> - </span>
                                                     )}
                                                 </div>
                                             </td>

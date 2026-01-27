@@ -99,11 +99,11 @@ export default function Home() {
                         <DialogDescription className="text-left mt-4">
                             <div className="space-y-4 text-slate-600 font-body text-sm md:text-base">
                                 <p>
-                                    This game is for entertainment purposes only. Any hookups, rendezvous, or scandalous connections you see are drawn from publicly known gossip, pop culture, and verified sources—our AI is strictly instructed to avoid fake news or unverified claims.
+                                    This game is for entertainment purposes only. Any hookups, rendezvous, or scandalous connections you see are drawn from publicly known gossip, pop culture, and verified sources - our AI is strictly instructed to avoid fake news or unverified claims.
                                     <br /> <br />
-                                    The content is not intended to be factual, defamatory, or make any claims about the actual personal lives (or bedrooms) of any celebrities. Players should not take anything presented here as fact—just as you wouldn’t take a gossip column to bed.
+                                    The content is not intended to be factual, defamatory, or make any claims about the actual personal lives (or bedrooms) of any celebrities. Players should not take anything presented here as fact - just as you wouldn’t take a gossip column to bed.
                                     <br /> <br />
-                                    We do not verify every detail or timing of any relationships—this is about connecting the dots. Players should enjoy the drama, innuendo, and chaos without believing it's the tabloids' truth.
+                                    We do not verify every detail or timing of any relationships - this is about connecting the dots. Players should enjoy the drama, innuendo, and chaos without believing it's the tabloids' truth.
                                 </p>
 
                                 <p className="text-sm italic text-slate-500 pt-2">

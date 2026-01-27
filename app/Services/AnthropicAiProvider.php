@@ -37,6 +37,12 @@ class AnthropicAiProvider implements AiProvider
             throw new \RuntimeException('Anthropic response had no text blocks');
         }
 
+        Log::info('AnthropicAiProvider: AI response received', [
+            'model' => $model,
+            'response_length' => strlen($content),
+            'response_content' => $content,
+        ]);
+
         return $content;
     }
 }

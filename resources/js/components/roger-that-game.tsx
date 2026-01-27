@@ -369,7 +369,7 @@ export function RogerThatGame({ subjects, gameDate, guessUrl, previousGameUrl, s
                   <strong className="text-slate-900 font-semibold font-body">Spot the Culprit:</strong> Your job is to figure out which man has Rogered all four. Use gossip, pop culture, collaborations, and your questionable instincts.
                 </p>
                 <p>
-                  <strong className="text-slate-900 font-semibold font-body">Take your Shot:</strong> You get five guesses. Each one brings you closer to the truth—or deeper into regret.
+                  <strong className="text-slate-900 font-semibold font-body">Take your Shot:</strong> You get five guesses. Each one brings you closer to the truth - or deeper into regret.
                 </p>
                 <p>
                   <strong className="text-slate-900 font-semibold font-body">Nail It or Walk Away:</strong> Guess right and enjoy the bragging rights. Guess wrong and watch the rogue slip away… until tomorrow.
