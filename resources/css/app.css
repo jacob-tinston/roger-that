@@ -167,7 +167,6 @@
     }
 
     .bg-eggplant-pattern {
-        background-color: #f5f5f5;
         position: relative;
         padding: 1.5rem;
         overflow: hidden;
@@ -187,8 +186,8 @@
         background-size: 100px 100px, 100px 100px;
         background-position: 0px 0px, 50px 50px;
         background-repeat: repeat;
-        filter: grayscale(50%);
-        opacity: .5;
+        filter: grayscale(30%);
+        opacity: .4;
     }
 
     .bg-eggplant-pattern > * {
