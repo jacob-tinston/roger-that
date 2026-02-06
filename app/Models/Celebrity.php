@@ -53,4 +53,26 @@ class Celebrity extends Model
         return $this->belongsToMany(DailyGame::class, 'daily_game_subject')
             ->withTimestamps();
     }
+
+    /**
+     * Celebrities that were subjects in games where this celebrity was the answer (celebrity_1).
+     *
+     * @return BelongsToMany<Celebrity, Celebrity>
+     */
+    public function relatedSubjects(): BelongsToMany
+    {
+        return $this->belongsToMany(Celebrity::class, 'celebrity_relationships', 'celebrity_1_id', 'celebrity_2_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * Celebrities that were answers in games where this celebrity was a subject (celebrity_2).
+     *
+     * @return BelongsToMany<Celebrity, Celebrity>
+     */
+    public function relatedAnswers(): BelongsToMany
+    {
+        return $this->belongsToMany(Celebrity::class, 'celebrity_relationships', 'celebrity_2_id', 'celebrity_1_id')
+            ->withTimestamps();
+    }
 }

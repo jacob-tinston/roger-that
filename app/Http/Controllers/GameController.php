@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Admin\StoreManualGameRequest;
+use App\Jobs\CreateDailyGame;
 use App\Models\Celebrity;
 use App\Models\DailyGame;
 use App\Models\GamesPlayed;
@@ -10,8 +12,10 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
 
 class GameController extends Controller
 {
@@ -142,7 +146,9 @@ class GameController extends Controller
             return response()->json(['error' => 'No game or answer for this date'], 404);
         }
 
-        $correct = strcasecmp(trim($valid['guess']), $game->answer->name) === 0;
+        $guess = trim($valid['guess']);
+        $answerName = trim($game->answer->name);
+        $correct = $answerName !== '' && strcasecmp($guess, $answerName) === 0;
         $gameOver = (bool) ($valid['is_last_guess'] ?? false) && ! $correct;
 
         $payload = ['correct' => $correct];
@@ -170,17 +176,25 @@ class GameController extends Controller
     }
 
     /**
-     * Show recent games for the dashboard (9 most recent).
+     * Show recent games for the dashboard (12 most recent).
      */
     public function dashboard(): Response
     {
         $games = DailyGame::query()
             ->where('game_date', '<=', today())
             ->with(['answer', 'subjects'])
+            ->withCount([
+                'gamesPlayed as plays_count',
+                'gamesPlayed as wins_count' => fn ($query) => $query->where('success', true),
+            ])
             ->orderByDesc('game_date')
-            ->limit(9)
+            ->limit(12)
             ->get()
             ->map(function ($game) {
+                $plays = (int) $game->plays_count;
+                $wins = (int) $game->wins_count;
+                $winRate = $plays > 0 ? round(($wins / $plays) * 100, 1) : 0;
+
                 return [
                     'id' => $game->id,
                     'date' => $game->game_date->toDateString(),
@@ -193,20 +207,8 @@ class GameController extends Controller
                     ] : null,
                     'subjects' => $game->subjects->map(fn ($subject) => $subject->name)->all(),
                     'url' => route('game', ['date' => $game->game_date->format('Y-m-d')]),
-                ];
-            });
-
-        $femaleCelebrities = Celebrity::query()
-            ->where('gender', 'female')
-            ->orderBy('name')
-            ->get()
-            ->map(function ($celebrity) {
-                return [
-                    'id' => $celebrity->id,
-                    'name' => $celebrity->name,
-                    'year' => $celebrity->birth_year,
-                    'tagline' => $celebrity->tagline ?? '',
-                    'photo_url' => $celebrity->photo_url,
+                    'plays_count' => $plays,
+                    'win_rate' => $winRate,
                 ];
             });
 
@@ -223,7 +225,6 @@ class GameController extends Controller
 
         return Inertia::render('dashboard', [
             'games' => $games->values()->all(),
-            'femaleCelebrities' => $femaleCelebrities->values()->all(),
             'stats' => $stats,
         ]);
     }
@@ -272,6 +273,7 @@ class GameController extends Controller
                     'id' => $game->id,
                     'date' => $game->game_date->toDateString(),
                     'formatted_date' => $game->game_date->format('F j, Y'),
+                    'type' => $game->type,
                     'answer' => $game->answer ? [
                         'name' => $game->answer->name,
                         'year' => $game->answer->birth_year,
@@ -281,9 +283,78 @@ class GameController extends Controller
                 ];
             });
 
+        $gameTypes = DailyGame::query()
+            ->where('game_date', '<=', today())
+            ->distinct()
+            ->pluck('type')
+            ->filter()
+            ->values()
+            ->all();
+
         return Inertia::render('admin/games', [
             'games' => $games->values()->all(),
+            'gameTypes' => $gameTypes,
+            'generateUrl' => route('admin.games.generate'),
+            'storeManualUrl' => route('admin.games.storeManual'),
+            'celebritiesSearchUrl' => route('admin.celebrities.search'),
+            'celebritiesRelationshipsUrlTemplate' => preg_replace(
+                '#/\d+/relationships$#',
+                '/__ID__/relationships',
+                route('admin.celebrities.relationships.index', ['celebrity' => 1], true)
+            ),
         ]);
+    }
+
+    /**
+     * Generate a daily game via AI for the given date. Runs synchronously.
+     */
+    public function generate(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'date' => ['required', 'date', 'before_or_equal:today'],
+            'type' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $gameDate = Carbon::parse($validated['date'])->startOfDay();
+        $type = $validated['type'] ?? 'celebrity_sh*ggers';
+
+        try {
+            (new CreateDailyGame($gameDate, $type))->handle();
+        } catch (RuntimeException $e) {
+            return redirect()->route('admin.games.index')
+                ->with('error', 'Generation failed: '.$e->getMessage());
+        }
+
+        return redirect()->route('admin.games.index')
+            ->with('success', 'Game for '.$gameDate->format('F j, Y').' created successfully.');
+    }
+
+    /**
+     * Store a manually created daily game (answer + 4 subjects from relationships).
+     */
+    public function storeManual(StoreManualGameRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
+        $answer = Celebrity::findOrFail($validated['answer_id']);
+        $relatedIds = $answer->relatedSubjects()->get()->pluck('id')->all();
+
+        $invalidSubjects = array_diff($validated['subject_ids'], $relatedIds);
+        if ($invalidSubjects !== []) {
+            return redirect()->back()
+                ->withErrors(['subject_ids' => 'All 4 subjects must be from this answer\'s saved relationships.'])
+                ->withInput();
+        }
+
+        $game = DailyGame::create([
+            'game_date' => $validated['game_date'],
+            'type' => $validated['type'],
+            'answer_id' => $validated['answer_id'],
+        ]);
+
+        $game->subjects()->sync($validated['subject_ids']);
+
+        return redirect()->route('admin.games.index')
+            ->with('success', 'Game created successfully.');
     }
 
     /**
@@ -300,6 +371,6 @@ class GameController extends Controller
         // Delete the game (answer_id is just a foreign key, celebrities remain)
         $game->delete();
 
-        return redirect()->route('dashboard')->with('success', 'Game deleted successfully.');
+        return redirect()->route('admin.games.index')->with('success', 'Game deleted successfully.');
     }
 }

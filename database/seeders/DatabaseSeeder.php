@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\DailyGame;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -25,6 +26,10 @@ class DatabaseSeeder extends Seeder
                 'role_id' => $adminRole->id,
             ]);
         }
+
+        // Update all DailyGame records with type 'guess_connection' to 'celebrity_sh*ggers'
+        DailyGame::where('type', 'guess_connection')
+            ->update(['type' => 'celebrity_sh*ggers']);
 
         $this->call(SettingsSeeder::class);
     }

@@ -21,7 +21,8 @@ class CreateDailyGame implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        private ?Carbon $gameDate = null
+        private ?Carbon $gameDate = null,
+        private string $type = 'celebrity_sh*ggers'
     ) {
         $this->gameDate ??= Carbon::today();
     }
@@ -275,7 +276,7 @@ class CreateDailyGame implements ShouldQueue
 
         $game = DailyGame::firstOrCreate(
             ['game_date' => $gameDate],
-            ['answer_id' => $answer->id]
+            ['answer_id' => $answer->id, 'type' => $this->type]
         );
 
         $game->subjects()->sync($subjectIds);

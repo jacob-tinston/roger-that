@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('daily_games', function (Blueprint $table) {
+        Schema::create('celebrity_relationships', function (Blueprint $table) {
             $table->id();
-            $table->string('type')->default('celebrity_sh*ggers');
-            $table->foreignId('answer_id')->nullable()->constrained('celebrities')->nullOnDelete();
-            $table->date('game_date')->unique();
+            $table->foreignId('celebrity_1_id')->constrained('celebrities')->cascadeOnDelete();
+            $table->foreignId('celebrity_2_id')->constrained('celebrities')->cascadeOnDelete();
             $table->timestamps();
+
+            $table->unique(['celebrity_1_id', 'celebrity_2_id']);
         });
     }
 
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('daily_games');
+        Schema::dropIfExists('celebrity_relationships');
     }
 };

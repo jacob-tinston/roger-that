@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DailyGame extends Model
 {
@@ -20,6 +21,7 @@ class DailyGame extends Model
     protected $fillable = [
         'answer_id',
         'game_date',
+        'type',
     ];
 
     /**
@@ -51,5 +53,15 @@ class DailyGame extends Model
     {
         return $this->belongsToMany(Celebrity::class, 'daily_game_subject')
             ->withTimestamps();
+    }
+
+    /**
+     * Plays of this game (user attempts).
+     *
+     * @return HasMany<GamesPlayed, DailyGame>
+     */
+    public function gamesPlayed(): HasMany
+    {
+        return $this->hasMany(GamesPlayed::class, 'game_id');
     }
 }
