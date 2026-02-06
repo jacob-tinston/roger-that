@@ -20,7 +20,7 @@ class OpenAiProvider implements AiProvider
                 ['role' => 'system', 'content' => $systemPrompt],
                 ['role' => 'user', 'content' => $userPrompt],
             ],
-            'max_tokens' => 2048,
+            'max_tokens' => 4096,
         ]);
 
         $content = $response->choices[0]->message->content ?? '';

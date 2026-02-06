@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Jobs\CreateDailyGame;
+use App\Models\DailyGame;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 
@@ -29,6 +30,12 @@ class DailyGameCreateCommand extends Command
     {
         $dateInput = $this->option('date');
         $gameDate = $dateInput ? Carbon::parse($dateInput) : Carbon::today();
+
+        if (DailyGame::where('game_date', $gameDate)->exists()) {
+            $this->info('A game already exists for '.$gameDate->toDateString().'.');
+
+            return self::SUCCESS;
+        }
 
         if ($this->option('queue')) {
             CreateDailyGame::dispatch($gameDate);

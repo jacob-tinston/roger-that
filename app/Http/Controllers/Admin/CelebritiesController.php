@@ -34,6 +34,7 @@ class CelebritiesController extends Controller
                     'photo_url' => $celebrity->photo_url,
                     'related_subjects_count' => $celebrity->related_subjects_count,
                     'related_answers_count' => $celebrity->related_answers_count,
+                    'created_at' => $celebrity->created_at->toIso8601String(),
                     'url' => route('admin.celebrities.show', $celebrity),
                 ];
             });

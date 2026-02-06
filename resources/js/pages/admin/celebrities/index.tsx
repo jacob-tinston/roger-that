@@ -37,6 +37,7 @@ interface Celebrity {
     photo_url: string | null;
     related_subjects_count: number;
     related_answers_count: number;
+    created_at: string;
     url: string;
 }
 
@@ -50,10 +51,18 @@ const GENDER_OPTIONS = [
     { value: 'male', label: 'Male' },
 ] as const;
 
+const SORT_OPTIONS = [
+    { value: 'relationships_desc', label: 'Most relationships' },
+    { value: 'relationships_asc', label: 'Fewest relationships' },
+    { value: 'created_desc', label: 'Newest first' },
+    { value: 'created_asc', label: 'Oldest first' },
+] as const;
+
 export default function CelebritiesIndex() {
     const { celebrities } = usePage<CelebritiesIndexPageProps>().props;
     const [searchQuery, setSearchQuery] = useState('');
     const [genderFilter, setGenderFilter] = useState<string>('all');
+    const [sortBy, setSortBy] = useState<string>('relationships_desc');
 
     const filtered = useMemo(() => {
         let list = celebrities;
@@ -69,8 +78,14 @@ export default function CelebritiesIndex() {
                     c.gender.toLowerCase().includes(q)
             );
         }
-        return list;
-    }, [celebrities, searchQuery, genderFilter]);
+        const totalR = (c: Celebrity) => c.related_subjects_count + c.related_answers_count;
+        const sorted = [...list];
+        if (sortBy === 'relationships_desc') sorted.sort((a, b) => totalR(b) - totalR(a));
+        else if (sortBy === 'relationships_asc') sorted.sort((a, b) => totalR(a) - totalR(b));
+        else if (sortBy === 'created_desc') sorted.sort((a, b) => (b.created_at > a.created_at ? 1 : -1));
+        else if (sortBy === 'created_asc') sorted.sort((a, b) => (a.created_at > b.created_at ? 1 : -1));
+        return sorted;
+    }, [celebrities, searchQuery, genderFilter, sortBy]);
 
     const getInitials = (name: string) =>
         name
@@ -106,6 +121,18 @@ export default function CelebritiesIndex() {
                             </SelectTrigger>
                             <SelectContent>
                                 {GENDER_OPTIONS.map((opt) => (
+                                    <SelectItem key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Select value={sortBy} onValueChange={setSortBy}>
+                            <SelectTrigger className="w-[200px] shrink-0">
+                                <SelectValue placeholder="Sort by" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {SORT_OPTIONS.map((opt) => (
                                     <SelectItem key={opt.value} value={opt.value}>
                                         {opt.label}
                                     </SelectItem>

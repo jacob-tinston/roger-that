@@ -1,5 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, Loader2, Plus, Search, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Plus, Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,6 @@ import {
     DialogDescription,
     DialogFooter,
     DialogTitle,
-    DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -500,38 +499,6 @@ export default function Games() {
                                                             </div>
                                                         )}
                                                     </button>
-                                                    <Dialog>
-                                                        <DialogTrigger asChild>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-6 w-full text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
-                                                                onClick={(e) => e.stopPropagation()}
-                                                            >
-                                                                <Trash2 className="h-3 w-3 mr-1" />
-                                                                Delete
-                                                            </Button>
-                                                        </DialogTrigger>
-                                                        <DialogContent onClick={(e) => e.stopPropagation()}>
-                                                            <DialogTitle>Delete Game</DialogTitle>
-                                                            <DialogDescription>
-                                                                Are you sure you want to delete the game for {game.formatted_date}? This action cannot be undone.
-                                                            </DialogDescription>
-                                                            <DialogFooter className="gap-2">
-                                                                <DialogClose asChild>
-                                                                    <Button variant="secondary" size="sm">Cancel</Button>
-                                                                </DialogClose>
-                                                                <Button
-                                                                    variant="destructive"
-                                                                    size="sm"
-                                                                    onClick={() => handleDelete(game.id)}
-                                                                    disabled={deletingGameId === game.id}
-                                                                >
-                                                                    {deletingGameId === game.id ? 'Deleting...' : 'Delete'}
-                                                                </Button>
-                                                            </DialogFooter>
-                                                        </DialogContent>
-                                                    </Dialog>
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center justify-center h-10 text-slate-400 text-xs font-body">

@@ -16,7 +16,7 @@ class AnthropicAiProvider implements AiProvider
     {
         $message = $this->client->messages->create([
             'model' => $model,
-            'max_tokens' => 2048,
+            'max_tokens' => 10000,
             'system' => $systemPrompt,
             'messages' => [
                 ['role' => 'user', 'content' => $userPrompt],
@@ -37,11 +37,11 @@ class AnthropicAiProvider implements AiProvider
             throw new \RuntimeException('Anthropic response had no text blocks');
         }
 
-        Log::info('AnthropicAiProvider: AI response received', [
-            'model' => $model,
-            'response_length' => strlen($content),
-            'response_content' => $content,
-        ]);
+        // Log::info('AnthropicAiProvider: AI response received', [
+        //     'model' => $model,
+        //     'response_length' => strlen($content),
+        //     'response_content' => $content,
+        // ]);
 
         return $content;
     }

@@ -26,8 +26,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 interface Settings {
-    SYSTEM_PROMPT?: string;
-    USER_PROMPT?: string;
+    CELEBRITIES_SYSTEM_PROMPT?: string;
+    CELEBRITIES_USER_PROMPT?: string;
+    CELEBRITIES_RELATIONSHIPS_SYSTEM_PROMPT?: string;
+    CELEBRITIES_RELATIONSHIPS_USER_PROMPT?: string;
     SUBTITLES?: string[];
     REACTIONS?: {
         wrong?: string[];
@@ -134,47 +136,89 @@ export default function Settings({ settings }: { settings: Settings }) {
                     >
                             {({ processing, recentlySuccessful, errors }) => (
                                 <>
-                                    {/* System Prompt */}
+                                    {/* Celebrities (male list) prompts */}
                                     <div className="space-y-6">
                                         <HeadingSmall
-                                            title="System Prompt"
-                                            description="The system prompt used for AI game generation"
+                                            title="Celebrities — system prompt"
+                                            description="System prompt for generating the list of male celebrities (10 per run)"
                                         />
                                         <div className="grid gap-2">
-                                            <Label htmlFor="SYSTEM_PROMPT" className="font-body text-slate-900">
-                                                System Prompt
+                                            <Label htmlFor="CELEBRITIES_SYSTEM_PROMPT" className="font-body text-slate-900">
+                                                System prompt
                                             </Label>
                                             <Textarea
-                                                id="SYSTEM_PROMPT"
-                                                name="settings[SYSTEM_PROMPT]"
-                                                value={localSettings.SYSTEM_PROMPT || ''}
-                                                onChange={(e) => updateSetting('SYSTEM_PROMPT', e.target.value)}
+                                                id="CELEBRITIES_SYSTEM_PROMPT"
+                                                name="settings[CELEBRITIES_SYSTEM_PROMPT]"
+                                                value={localSettings.CELEBRITIES_SYSTEM_PROMPT || ''}
+                                                onChange={(e) => updateSetting('CELEBRITIES_SYSTEM_PROMPT', e.target.value)}
                                                 rows={20}
                                                 className="font-mono text-sm"
                                             />
-                                            <InputError className="mt-2" message={errors['settings.SYSTEM_PROMPT']} />
+                                            <InputError className="mt-2" message={errors['settings.CELEBRITIES_SYSTEM_PROMPT']} />
                                         </div>
                                     </div>
 
-                                    {/* User Prompt */}
                                     <div className="space-y-6">
                                         <HeadingSmall
-                                            title="User Prompt"
-                                            description="The user prompt template used for AI game generation"
+                                            title="Celebrities — user prompt"
+                                            description="User prompt template. Use [INSERT_EXCLUDED_NAMES_HERE] for names already in the database."
                                         />
                                         <div className="grid gap-2">
-                                            <Label htmlFor="USER_PROMPT" className="font-body text-slate-900">
-                                                User Prompt Template
+                                            <Label htmlFor="CELEBRITIES_USER_PROMPT" className="font-body text-slate-900">
+                                                User prompt
                                             </Label>
                                             <Textarea
-                                                id="USER_PROMPT"
-                                                name="settings[USER_PROMPT]"
-                                                value={localSettings.USER_PROMPT || ''}
-                                                onChange={(e) => updateSetting('USER_PROMPT', e.target.value)}
-                                                rows={15}
+                                                id="CELEBRITIES_USER_PROMPT"
+                                                name="settings[CELEBRITIES_USER_PROMPT]"
+                                                value={localSettings.CELEBRITIES_USER_PROMPT || ''}
+                                                onChange={(e) => updateSetting('CELEBRITIES_USER_PROMPT', e.target.value)}
+                                                rows={8}
                                                 className="font-mono text-sm"
                                             />
-                                            <InputError className="mt-2" message={errors['settings.USER_PROMPT']} />
+                                            <InputError className="mt-2" message={errors['settings.CELEBRITIES_USER_PROMPT']} />
+                                        </div>
+                                    </div>
+
+                                    {/* Celebrities relationships prompts */}
+                                    <div className="space-y-6">
+                                        <HeadingSmall
+                                            title="Celebrities relationships — system prompt"
+                                            description="System prompt for fetching past relationships (5–10 per male, with taglines)"
+                                        />
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="CELEBRITIES_RELATIONSHIPS_SYSTEM_PROMPT" className="font-body text-slate-900">
+                                                System prompt
+                                            </Label>
+                                            <Textarea
+                                                id="CELEBRITIES_RELATIONSHIPS_SYSTEM_PROMPT"
+                                                name="settings[CELEBRITIES_RELATIONSHIPS_SYSTEM_PROMPT]"
+                                                value={localSettings.CELEBRITIES_RELATIONSHIPS_SYSTEM_PROMPT || ''}
+                                                onChange={(e) => updateSetting('CELEBRITIES_RELATIONSHIPS_SYSTEM_PROMPT', e.target.value)}
+                                                rows={28}
+                                                className="font-mono text-sm"
+                                            />
+                                            <InputError className="mt-2" message={errors['settings.CELEBRITIES_RELATIONSHIPS_SYSTEM_PROMPT']} />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <HeadingSmall
+                                            title="Celebrities relationships — user prompt"
+                                            description="User prompt template. Use [INSERT_CELEBRITY_NAMES_HERE] for the list of male names."
+                                        />
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="CELEBRITIES_RELATIONSHIPS_USER_PROMPT" className="font-body text-slate-900">
+                                                User prompt
+                                            </Label>
+                                            <Textarea
+                                                id="CELEBRITIES_RELATIONSHIPS_USER_PROMPT"
+                                                name="settings[CELEBRITIES_RELATIONSHIPS_USER_PROMPT]"
+                                                value={localSettings.CELEBRITIES_RELATIONSHIPS_USER_PROMPT || ''}
+                                                onChange={(e) => updateSetting('CELEBRITIES_RELATIONSHIPS_USER_PROMPT', e.target.value)}
+                                                rows={6}
+                                                className="font-mono text-sm"
+                                            />
+                                            <InputError className="mt-2" message={errors['settings.CELEBRITIES_RELATIONSHIPS_USER_PROMPT']} />
                                         </div>
                                     </div>
 
