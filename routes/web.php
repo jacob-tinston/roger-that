@@ -15,6 +15,8 @@ Route::get('robots.txt', [\App\Http\Controllers\SitemapController::class, 'robot
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('admin', [GameController::class, 'dashboard'])->name('dashboard');
     Route::get('admin/games', [GameController::class, 'games'])->name('admin.games.index');
+    Route::get('admin/games/{game}', [GameController::class, 'show'])->name('admin.games.show');
+    Route::patch('admin/games/{game}', [GameController::class, 'update'])->name('admin.games.update');
     Route::post('admin/games/generate', [GameController::class, 'generate'])->name('admin.games.generate');
     Route::post('admin/games/manual', [GameController::class, 'storeManual'])->name('admin.games.storeManual');
     Route::delete('admin/games/{game}', [GameController::class, 'destroy'])->name('admin.games.destroy');

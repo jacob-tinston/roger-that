@@ -21,6 +21,8 @@ test('admin games index returns create URLs and game types', function (): void {
         ->has('gameTypes')
         ->has('generateUrl')
         ->has('storeManualUrl')
+        ->has('gameShowUrlTemplate')
+        ->has('gameUpdateUrlTemplate')
         ->has('celebritiesSearchUrl')
         ->has('celebritiesRelationshipsUrlTemplate')
     );
@@ -52,6 +54,42 @@ test('admin can create a game manually with answer and four subjects from relati
         ->first();
     expect($game)->not->toBeNull();
     expect($game->subjects)->toHaveCount(4);
+});
+
+test('admin can fetch single game for edit modal', function (): void {
+    $game = DailyGame::factory()->create(['game_date' => now()->subDay()]);
+
+    $response = $this->actingAs($this->admin)->getJson(route('admin.games.show', $game));
+
+    $response->assertOk();
+    $response->assertJsonFragment([
+        'id' => $game->id,
+        'date' => $game->game_date->toDateString(),
+    ]);
+    $response->assertJsonStructure(['answer', 'subjects', 'plays_count', 'win_rate', 'url']);
+});
+
+test('admin can update game answer and subjects', function (): void {
+    $game = DailyGame::factory()->create(['game_date' => now()->subDays(2)]);
+    $answer = Celebrity::factory()->create();
+    $subjects = Celebrity::factory()->count(4)->create();
+    foreach ($subjects as $subject) {
+        \App\Models\CelebrityRelationship::create([
+            'celebrity_1_id' => $answer->id,
+            'celebrity_2_id' => $subject->id,
+        ]);
+    }
+
+    $response = $this->actingAs($this->admin)->patchJson(route('admin.games.update', $game), [
+        'answer_id' => $answer->id,
+        'subject_ids' => $subjects->pluck('id')->all(),
+    ]);
+
+    $response->assertOk();
+    $response->assertJson(['success' => true]);
+    $game->refresh();
+    expect($game->answer_id)->toBe($answer->id);
+    expect($game->subjects->pluck('id')->all())->toEqual($subjects->pluck('id')->all());
 });
 
 test('admin delete game redirects to games index so calendar updates', function (): void {

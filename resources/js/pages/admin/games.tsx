@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { ChevronLeft, ChevronRight, Loader2, Plus, Search, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -56,11 +56,25 @@ interface CelebrityOption {
     photo_url: string | null;
 }
 
+interface GameDetail {
+    id: number;
+    date: string;
+    formatted_date: string;
+    type: string;
+    url: string;
+    answer: { id: number; name: string; year: number; photo_url: string | null } | null;
+    subjects: { id: number; name: string; photo_url: string | null }[];
+    plays_count: number;
+    win_rate: number;
+}
+
 interface GamesPageProps {
     games: Game[];
     gameTypes: string[];
     generateUrl: string;
     storeManualUrl: string;
+    gameShowUrlTemplate: string;
+    gameUpdateUrlTemplate: string;
     celebritiesSearchUrl: string;
     celebritiesRelationshipsUrlTemplate: string;
 }
@@ -78,6 +92,8 @@ export default function Games() {
         gameTypes,
         generateUrl,
         storeManualUrl,
+        gameShowUrlTemplate,
+        gameUpdateUrlTemplate,
         celebritiesSearchUrl,
         celebritiesRelationshipsUrlTemplate,
     } = usePage<GamesPageProps>().props;
@@ -109,6 +125,17 @@ export default function Games() {
     const [manualSubjectIds, setManualSubjectIds] = useState<number[]>([]);
     const [generateLoading, setGenerateLoading] = useState(false);
     const [manualSubmitting, setManualSubmitting] = useState(false);
+
+    const [editGameId, setEditGameId] = useState<number | null>(null);
+    const [editGame, setEditGame] = useState<GameDetail | null>(null);
+    const [editLoading, setEditLoading] = useState(false);
+    const [editAnswerSearch, setEditAnswerSearch] = useState('');
+    const [editAnswerResults, setEditAnswerResults] = useState<CelebrityOption[]>([]);
+    const [editAnswer, setEditAnswer] = useState<CelebrityOption | null>(null);
+    const [editRelationships, setEditRelationships] = useState<CelebrityOption[]>([]);
+    const [editSubjectIds, setEditSubjectIds] = useState<number[]>([]);
+    const [editSaving, setEditSaving] = useState(false);
+    const [editError, setEditError] = useState<string | null>(null);
 
     const getTodayDateStr = useCallback(() => {
         const d = new Date();
@@ -231,6 +258,104 @@ export default function Games() {
             preserveScroll: true,
             onFinish: () => setDeletingGameId(null),
         });
+    };
+
+    const openEditModal = useCallback(
+        (gameId: number) => {
+            setEditGameId(gameId);
+            setEditGame(null);
+            setEditError(null);
+            setEditLoading(true);
+            const url = gameShowUrlTemplate.replace('__ID__', String(gameId));
+            fetch(url, { credentials: 'include' })
+                .then((r) => (r.ok ? r.json() : Promise.reject(new Error('Failed to load game'))))
+                .then((data: GameDetail) => {
+                    setEditGame(data);
+                    setEditAnswer(
+                        data.answer
+                            ? {
+                                  id: data.answer.id,
+                                  name: data.answer.name,
+                                  birth_year: data.answer.year,
+                                  photo_url: data.answer.photo_url,
+                              }
+                            : null
+                    );
+                    setEditSubjectIds(data.subjects.map((s) => s.id));
+                    setEditAnswerSearch('');
+                    setEditAnswerResults([]);
+                })
+                .catch(() => setEditError('Failed to load game'))
+                .finally(() => setEditLoading(false));
+        },
+        [gameShowUrlTemplate]
+    );
+
+    const closeEditModal = useCallback(() => {
+        setEditGameId(null);
+        setEditGame(null);
+        setEditAnswer(null);
+        setEditAnswerSearch('');
+        setEditAnswerResults([]);
+        setEditRelationships([]);
+        setEditSubjectIds([]);
+        setEditError(null);
+    }, []);
+
+    useEffect(() => {
+        if (editGameId == null || !editAnswer) return;
+        const url = celebritiesRelationshipsUrlTemplate.replace('__ID__', String(editAnswer.id));
+        fetch(url, { credentials: 'include' })
+            .then((r) => (r.ok ? r.json() : Promise.reject()))
+            .then((data: CelebrityOption[]) => setEditRelationships(data))
+            .catch(() => setEditRelationships([]));
+    }, [editGameId, editAnswer?.id, celebritiesRelationshipsUrlTemplate]);
+
+    useEffect(() => {
+        if (editGameId == null || editAnswerSearch === '') {
+            setEditAnswerResults([]);
+            return;
+        }
+        const t = setTimeout(() => {
+            const params = new URLSearchParams({ q: editAnswerSearch });
+            fetch(`${celebritiesSearchUrl}?${params}`, { credentials: 'include' })
+                .then((r) => (r.ok ? r.json() : Promise.reject()))
+                .then((data: CelebrityOption[]) => setEditAnswerResults(data))
+                .catch(() => setEditAnswerResults([]));
+        }, 200);
+        return () => clearTimeout(t);
+    }, [editGameId, editAnswerSearch, celebritiesSearchUrl]);
+
+    const toggleEditSubject = (id: number) => {
+        setEditSubjectIds((prev) => {
+            if (prev.includes(id)) return prev.filter((x) => x !== id);
+            if (prev.length >= 4) return prev;
+            return [...prev, id];
+        });
+    };
+
+    const handleEditSave = () => {
+        if (!editGame || !editAnswer || editSubjectIds.length !== 4) return;
+        setEditSaving(true);
+        setEditError(null);
+        const url = gameUpdateUrlTemplate.replace('__ID__', String(editGame.id));
+        fetch(url, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '', Accept: 'application/json' },
+            body: JSON.stringify({ answer_id: editAnswer.id, subject_ids: editSubjectIds }),
+        })
+            .then((r) => {
+                if (!r.ok) return r.json().then((d) => Promise.reject(new Error(d.message ?? 'Update failed')));
+            })
+            .then(() => {
+                closeEditModal();
+                router.reload();
+            })
+            .catch((err: Error) => {
+                setEditError(err.message ?? 'Update failed');
+            })
+            .finally(() => setEditSaving(false));
     };
 
     const handleGenerateSubmit = () => {
@@ -357,10 +482,13 @@ export default function Games() {
                                             </div>
                                             {game ? (
                                                 <div className="space-y-1">
-                                                    <Link
-                                                        href={game.url}
-                                                        className="block rounded border border-slate-200 bg-slate-50 p-2 text-left text-xs hover:border-coral hover:bg-coral/5 transition-colors"
-                                                        onClick={(e) => e.stopPropagation()}
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openEditModal(game.id);
+                                                        }}
+                                                        className="w-full block rounded border border-slate-200 bg-slate-50 p-2 text-left text-xs hover:border-coral hover:bg-coral/5 transition-colors"
                                                     >
                                                         <div className="font-medium text-slate-900 font-body truncate">
                                                             {game.answer?.name ?? '—'}
@@ -371,7 +499,7 @@ export default function Games() {
                                                                 {game.subjects.length > 2 ? '…' : ''}
                                                             </div>
                                                         )}
-                                                    </Link>
+                                                    </button>
                                                     <Dialog>
                                                         <DialogTrigger asChild>
                                                             <Button
@@ -621,6 +749,181 @@ export default function Games() {
                                 </DialogFooter>
                             </>
                         )}
+                    </DialogContent>
+                </Dialog>
+
+                {/* Edit game modal */}
+                <Dialog open={editGameId !== null} onOpenChange={(open) => !open && closeEditModal()}>
+                    <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                        {editLoading ? (
+                            <div className="flex flex-col items-center justify-center py-12 gap-4">
+                                <Loader2 className="h-10 w-10 animate-spin text-coral" />
+                                <p className="text-slate-600 font-body">Loading game…</p>
+                            </div>
+                        ) : editError && !editGame ? (
+                            <div className="py-6 text-center">
+                                <p className="text-red-600 font-body">{editError}</p>
+                                <Button variant="secondary" size="sm" className="mt-4" onClick={closeEditModal}>
+                                    Close
+                                </Button>
+                            </div>
+                        ) : editGame ? (
+                            <>
+                                <DialogTitle>Edit game — {editGame.formatted_date}</DialogTitle>
+                                <DialogDescription>
+                                    Update the answer and subjects. Stats are for this game only.
+                                </DialogDescription>
+                                <div className="space-y-4 py-2">
+                                    <div className="flex gap-4 text-sm text-slate-600 font-body">
+                                        <span>
+                                            <span className="font-semibold">{editGame.plays_count}</span> played
+                                        </span>
+                                        <span>
+                                            <span className="font-semibold">{editGame.win_rate}%</span> win rate
+                                        </span>
+                                        <a
+                                            href={editGame.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="text-coral hover:underline"
+                                        >
+                                            Play game →
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <Label>Answer (celebrity)</Label>
+                                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                                            {editAnswer ? (
+                                                <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                                                    {editAnswer.photo_url ? (
+                                                        <img
+                                                            src={editAnswer.photo_url}
+                                                            alt=""
+                                                            className="h-8 w-8 rounded-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
+                                                            {editAnswer.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
+                                                        </div>
+                                                    )}
+                                                    <span className="font-body text-sm font-medium">{editAnswer.name}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setEditAnswer(null)}
+                                                        className="text-slate-400 hover:text-slate-600 text-xs"
+                                                    >
+                                                        Change
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <Input
+                                                        placeholder="Search celebrities…"
+                                                        value={editAnswerSearch}
+                                                        onChange={(e) => setEditAnswerSearch(e.target.value)}
+                                                        className="max-w-[200px]"
+                                                    />
+                                                    {editAnswerResults.length > 0 && (
+                                                        <ul className="mt-1 w-full max-h-40 overflow-y-auto rounded border border-slate-200 bg-white py-1">
+                                                            {editAnswerResults.map((c) => (
+                                                                <li key={c.id}>
+                                                                    <button
+                                                                        type="button"
+                                                                        className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-slate-50 font-body text-sm"
+                                                                        onClick={() => {
+                                                                            setEditAnswer(c);
+                                                                            setEditAnswerSearch('');
+                                                                            setEditAnswerResults([]);
+                                                                            setEditSubjectIds([]);
+                                                                        }}
+                                                                    >
+                                                                        {c.photo_url ? (
+                                                                            <img src={c.photo_url} alt="" className="h-6 w-6 rounded-full object-cover" />
+                                                                        ) : (
+                                                                            <div className="h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center text-xs">
+                                                                                {c.name.slice(0, 2).toUpperCase()}
+                                                                            </div>
+                                                                        )}
+                                                                        {c.name} (b. {c.birth_year})
+                                                                    </button>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <Label>Subjects (choose 4 from {editAnswer?.name ?? 'answer'}&apos;s relationships)</Label>
+                                        {!editAnswer ? (
+                                            <p className="mt-1 text-sm text-slate-500 font-body">Select an answer first.</p>
+                                        ) : editRelationships.length === 0 ? (
+                                            <p className="mt-1 text-sm text-slate-500 font-body">No saved relationships. Add them in Celebrities admin.</p>
+                                        ) : (
+                                            <div className="mt-2 space-y-1 max-h-48 overflow-y-auto">
+                                                {editRelationships.map((c) => (
+                                                    <label
+                                                        key={c.id}
+                                                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer font-body text-sm"
+                                                    >
+                                                        <Checkbox
+                                                            checked={editSubjectIds.includes(c.id)}
+                                                            onCheckedChange={() => toggleEditSubject(c.id)}
+                                                            disabled={!editSubjectIds.includes(c.id) && editSubjectIds.length >= 4}
+                                                        />
+                                                        {c.photo_url ? (
+                                                            <img src={c.photo_url} alt="" className="h-6 w-6 rounded-full object-cover shrink-0" />
+                                                        ) : (
+                                                            <div className="h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center text-xs shrink-0">
+                                                                {c.name.slice(0, 2).toUpperCase()}
+                                                            </div>
+                                                        )}
+                                                        <span className="font-medium text-slate-900">{c.name}</span>
+                                                        <span className="text-slate-500 text-xs">(b. {c.birth_year})</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {editAnswer && editSubjectIds.length !== 4 && (
+                                            <p className="mt-1 text-xs text-amber-600 font-body">
+                                                Select exactly 4 subjects ({editSubjectIds.length}/4).
+                                            </p>
+                                        )}
+                                    </div>
+                                    {editError && (
+                                        <p className="text-sm text-red-600 font-body">{editError}</p>
+                                    )}
+                                </div>
+                                <DialogFooter className="gap-2 flex-wrap">
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => {
+                                            if (editGameId != null) {
+                                                closeEditModal();
+                                                handleDelete(editGameId);
+                                            }
+                                        }}
+                                        disabled={deletingGameId === editGameId}
+                                    >
+                                        {deletingGameId === editGameId ? 'Deleting…' : 'Delete game'}
+                                    </Button>
+                                    <div className="flex gap-2 ml-auto">
+                                        <Button variant="secondary" size="sm" onClick={closeEditModal}>
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            onClick={handleEditSave}
+                                            disabled={!editAnswer || editSubjectIds.length !== 4 || editSaving}
+                                        >
+                                            {editSaving ? 'Saving…' : 'Save'}
+                                        </Button>
+                                    </div>
+                                </DialogFooter>
+                            </>
+                        ) : null}
                     </DialogContent>
                 </Dialog>
             </AdminLayout>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Admin\StoreManualGameRequest;
+use App\Http\Requests\Admin\UpdateGameRequest;
 use App\Jobs\CreateDailyGame;
 use App\Models\Celebrity;
 use App\Models\DailyGame;
@@ -291,11 +292,24 @@ class GameController extends Controller
             ->values()
             ->all();
 
+        $gameShowUrlTemplate = preg_replace(
+            '#/\d+$#',
+            '/__ID__',
+            route('admin.games.show', ['game' => 0], true)
+        );
+        $gameUpdateUrlTemplate = preg_replace(
+            '#/\d+$#',
+            '/__ID__',
+            route('admin.games.update', ['game' => 0], true)
+        );
+
         return Inertia::render('admin/games', [
             'games' => $games->values()->all(),
             'gameTypes' => $gameTypes,
             'generateUrl' => route('admin.games.generate'),
             'storeManualUrl' => route('admin.games.storeManual'),
+            'gameShowUrlTemplate' => $gameShowUrlTemplate,
+            'gameUpdateUrlTemplate' => $gameUpdateUrlTemplate,
             'celebritiesSearchUrl' => route('admin.celebrities.search'),
             'celebritiesRelationshipsUrlTemplate' => preg_replace(
                 '#/\d+/relationships$#',
@@ -355,6 +369,67 @@ class GameController extends Controller
 
         return redirect()->route('admin.games.index')
             ->with('success', 'Game created successfully.');
+    }
+
+    /**
+     * Get a single game's details for the admin edit modal (JSON).
+     */
+    public function show(DailyGame $game): JsonResponse
+    {
+        $game->load(['answer', 'subjects']);
+        $game->loadCount([
+            'gamesPlayed as plays_count',
+            'gamesPlayed as wins_count' => fn ($query) => $query->where('success', true),
+        ]);
+        $plays = (int) $game->plays_count;
+        $wins = (int) $game->wins_count;
+        $winRate = $plays > 0 ? round(($wins / $plays) * 100, 1) : 0;
+
+        $payload = [
+            'id' => $game->id,
+            'date' => $game->game_date->toDateString(),
+            'formatted_date' => $game->game_date->format('F j, Y'),
+            'type' => $game->type,
+            'url' => route('game', ['date' => $game->game_date->format('Y-m-d')]),
+            'answer' => $game->answer ? [
+                'id' => $game->answer->id,
+                'name' => $game->answer->name,
+                'year' => $game->answer->birth_year,
+                'photo_url' => $game->answer->photo_url,
+            ] : null,
+            'subjects' => $game->subjects->map(fn ($s) => [
+                'id' => $s->id,
+                'name' => $s->name,
+                'photo_url' => $s->photo_url,
+            ])->values()->all(),
+            'plays_count' => $plays,
+            'win_rate' => $winRate,
+        ];
+
+        return response()->json($payload);
+    }
+
+    /**
+     * Update a game's answer and subjects.
+     */
+    public function update(UpdateGameRequest $request, DailyGame $game): JsonResponse
+    {
+        $validated = $request->validated();
+        $answer = Celebrity::findOrFail($validated['answer_id']);
+        $relatedIds = $answer->relatedSubjects()->get()->pluck('id')->all();
+
+        $invalidSubjects = array_diff($validated['subject_ids'], $relatedIds);
+        if ($invalidSubjects !== []) {
+            return response()->json(
+                ['message' => 'All 4 subjects must be from this answer\'s saved relationships.'],
+                422
+            );
+        }
+
+        $game->update(['answer_id' => $validated['answer_id']]);
+        $game->subjects()->sync($validated['subject_ids']);
+
+        return response()->json(['success' => true]);
     }
 
     /**
