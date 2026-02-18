@@ -8,7 +8,7 @@ import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
 import { registerServiceWorker } from './utils/service-worker';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'Roger That';
 
 createInertiaApp({
     title: (title) => (title ? `${appName} | ${title}` : appName),
