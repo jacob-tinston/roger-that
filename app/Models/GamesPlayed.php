@@ -27,6 +27,7 @@ class GamesPlayed extends Model
         'game_id',
         'user_id',
         'success',
+        'attempts',
     ];
 
     /**
@@ -36,6 +37,7 @@ class GamesPlayed extends Model
     {
         return [
             'success' => 'boolean',
+            'attempts' => 'integer',
         ];
     }
 

@@ -46,6 +46,7 @@ interface Relationship {
     id: number;
     celebrity_1_id: number;
     celebrity_2_id: number;
+    citation: string | null;
     other: OtherCelebrity;
     role: 'answer' | 'subject';
 }
@@ -324,6 +325,16 @@ export default function CelebrityShow() {
                                                         (b. {rel.other.birth_year})
                                                     </span>
                                                 </p>
+                                                {rel.citation ? (
+                                                    <a
+                                                        href={rel.citation}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-xs text-slate-500 hover:text-slate-700 underline font-body truncate block max-w-full"
+                                                    >
+                                                        Citation
+                                                    </a>
+                                                ) : null}
                                             </div>
                                         </div>
                                         <Dialog>

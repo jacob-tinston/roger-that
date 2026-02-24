@@ -8,7 +8,6 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import AdminLayout from '@/layouts/admin/layout';
 import { dashboard } from '@/routes';
@@ -26,10 +25,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 interface Settings {
-    CELEBRITIES_SYSTEM_PROMPT?: string;
-    CELEBRITIES_USER_PROMPT?: string;
-    CELEBRITIES_RELATIONSHIPS_SYSTEM_PROMPT?: string;
-    CELEBRITIES_RELATIONSHIPS_USER_PROMPT?: string;
     SUBTITLES?: string[];
     REACTIONS?: {
         wrong?: string[];
@@ -98,7 +93,7 @@ export default function Settings({ settings }: { settings: Settings }) {
     };
 
     const title = 'Settings';
-    const description = 'Manage Celebrity Sh*ggers game settings, prompts, captions, and reactions from the admin panel.';
+    const description = 'Manage Celebrity Sh*ggers game settings, captions, and reactions from the admin panel.';
     const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
     const ogImage = typeof window !== 'undefined' ? `${window.location.origin}/logo.png` : undefined;
 
@@ -121,7 +116,7 @@ export default function Settings({ settings }: { settings: Settings }) {
                 {ogImage && <meta name="twitter:image" content={ogImage} />}
             </Head>
 
-            <AdminLayout title="Settings" description="Manage game settings and prompts">
+            <AdminLayout title="Settings" description="Manage game settings">
                 <div className="space-y-12">
                     <Form
                         action={update.url()}
@@ -136,92 +131,6 @@ export default function Settings({ settings }: { settings: Settings }) {
                     >
                             {({ processing, recentlySuccessful, errors }) => (
                                 <>
-                                    {/* Celebrities (male list) prompts */}
-                                    <div className="space-y-6">
-                                        <HeadingSmall
-                                            title="Celebrities — system prompt"
-                                            description="System prompt for generating the list of male celebrities (10 per run)"
-                                        />
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="CELEBRITIES_SYSTEM_PROMPT" className="font-body text-slate-900">
-                                                System prompt
-                                            </Label>
-                                            <Textarea
-                                                id="CELEBRITIES_SYSTEM_PROMPT"
-                                                name="settings[CELEBRITIES_SYSTEM_PROMPT]"
-                                                value={localSettings.CELEBRITIES_SYSTEM_PROMPT || ''}
-                                                onChange={(e) => updateSetting('CELEBRITIES_SYSTEM_PROMPT', e.target.value)}
-                                                rows={20}
-                                                className="font-mono text-sm"
-                                            />
-                                            <InputError className="mt-2" message={errors['settings.CELEBRITIES_SYSTEM_PROMPT']} />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-6">
-                                        <HeadingSmall
-                                            title="Celebrities — user prompt"
-                                            description="User prompt template. Use [INSERT_EXCLUDED_NAMES_HERE] for names already in the database."
-                                        />
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="CELEBRITIES_USER_PROMPT" className="font-body text-slate-900">
-                                                User prompt
-                                            </Label>
-                                            <Textarea
-                                                id="CELEBRITIES_USER_PROMPT"
-                                                name="settings[CELEBRITIES_USER_PROMPT]"
-                                                value={localSettings.CELEBRITIES_USER_PROMPT || ''}
-                                                onChange={(e) => updateSetting('CELEBRITIES_USER_PROMPT', e.target.value)}
-                                                rows={8}
-                                                className="font-mono text-sm"
-                                            />
-                                            <InputError className="mt-2" message={errors['settings.CELEBRITIES_USER_PROMPT']} />
-                                        </div>
-                                    </div>
-
-                                    {/* Celebrities relationships prompts */}
-                                    <div className="space-y-6">
-                                        <HeadingSmall
-                                            title="Celebrities relationships — system prompt"
-                                            description="System prompt for fetching past relationships (5–10 per male, with taglines)"
-                                        />
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="CELEBRITIES_RELATIONSHIPS_SYSTEM_PROMPT" className="font-body text-slate-900">
-                                                System prompt
-                                            </Label>
-                                            <Textarea
-                                                id="CELEBRITIES_RELATIONSHIPS_SYSTEM_PROMPT"
-                                                name="settings[CELEBRITIES_RELATIONSHIPS_SYSTEM_PROMPT]"
-                                                value={localSettings.CELEBRITIES_RELATIONSHIPS_SYSTEM_PROMPT || ''}
-                                                onChange={(e) => updateSetting('CELEBRITIES_RELATIONSHIPS_SYSTEM_PROMPT', e.target.value)}
-                                                rows={28}
-                                                className="font-mono text-sm"
-                                            />
-                                            <InputError className="mt-2" message={errors['settings.CELEBRITIES_RELATIONSHIPS_SYSTEM_PROMPT']} />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-6">
-                                        <HeadingSmall
-                                            title="Celebrities relationships — user prompt"
-                                            description="User prompt template. Use [INSERT_CELEBRITY_NAMES_HERE] for the list of male names."
-                                        />
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="CELEBRITIES_RELATIONSHIPS_USER_PROMPT" className="font-body text-slate-900">
-                                                User prompt
-                                            </Label>
-                                            <Textarea
-                                                id="CELEBRITIES_RELATIONSHIPS_USER_PROMPT"
-                                                name="settings[CELEBRITIES_RELATIONSHIPS_USER_PROMPT]"
-                                                value={localSettings.CELEBRITIES_RELATIONSHIPS_USER_PROMPT || ''}
-                                                onChange={(e) => updateSetting('CELEBRITIES_RELATIONSHIPS_USER_PROMPT', e.target.value)}
-                                                rows={6}
-                                                className="font-mono text-sm"
-                                            />
-                                            <InputError className="mt-2" message={errors['settings.CELEBRITIES_RELATIONSHIPS_USER_PROMPT']} />
-                                        </div>
-                                    </div>
-
                                     {/* Subtitles */}
                                     <div className="space-y-6">
                                         <HeadingSmall

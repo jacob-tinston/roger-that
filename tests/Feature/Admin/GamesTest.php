@@ -1,9 +1,11 @@
 <?php
 
+use App\Jobs\CreateDailyGame;
 use App\Models\Celebrity;
 use App\Models\DailyGame;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Support\Facades\Queue;
 
 beforeEach(function (): void {
     Role::create(['name' => 'Admin']);
@@ -26,6 +28,38 @@ test('admin games index returns create URLs and game types', function (): void {
         ->has('celebritiesSearchUrl')
         ->has('celebritiesRelationshipsUrlTemplate')
     );
+});
+
+test('admin generate dispatches job and returns JSON', function (): void {
+    Queue::fake();
+    $date = now()->subDay()->format('Y-m-d');
+
+    $response = $this->actingAs($this->admin)->postJson(route('admin.games.generate'), [
+        'date' => $date,
+        'type' => 'celebrity_sh*ggers',
+    ]);
+
+    $response->assertOk();
+    $response->assertJson([
+        'dispatched' => true,
+        'date' => $date,
+    ]);
+    Queue::assertPushed(CreateDailyGame::class);
+});
+
+test('admin generate returns 422 when game already exists for date', function (): void {
+    Queue::fake();
+    $game = DailyGame::factory()->create(['game_date' => now()->subDays(2)]);
+    $date = $game->game_date->format('Y-m-d');
+
+    $response = $this->actingAs($this->admin)->postJson(route('admin.games.generate'), [
+        'date' => $date,
+        'type' => 'celebrity_sh*ggers',
+    ]);
+
+    $response->assertStatus(422);
+    $response->assertJsonFragment(['message' => 'Game already exists for this date.']);
+    Queue::assertNotPushed(CreateDailyGame::class);
 });
 
 test('admin can create a game manually with answer and four subjects from relationships', function (): void {

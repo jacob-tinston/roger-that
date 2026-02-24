@@ -123,6 +123,8 @@ export default function Games() {
     const [manualRelationships, setManualRelationships] = useState<CelebrityOption[]>([]);
     const [manualSubjectIds, setManualSubjectIds] = useState<number[]>([]);
     const [generateLoading, setGenerateLoading] = useState(false);
+    const [generateError, setGenerateError] = useState<string | null>(null);
+    const [generatingDate, setGeneratingDate] = useState<string | null>(null);
     const [manualSubmitting, setManualSubmitting] = useState(false);
 
     const [editGameId, setEditGameId] = useState<number | null>(null);
@@ -154,6 +156,7 @@ export default function Games() {
             setManualAnswerResults([]);
             setManualRelationships([]);
             setManualSubjectIds([]);
+            setGenerateError(null);
             setCreateOpen(true);
         },
         [typeOptions, getTodayDateStr]
@@ -162,6 +165,7 @@ export default function Games() {
     const closeCreateModal = useCallback(() => {
         setCreateOpen(false);
         setGenerateLoading(false);
+        setGenerateError(null);
         setManualSubmitting(false);
     }, []);
 
@@ -185,6 +189,25 @@ export default function Games() {
         filteredGames.forEach((g) => map.set(g.date, g));
         return map;
     }, [filteredGames]);
+
+    // Clear generating spinner when the game appears in the list
+    useEffect(() => {
+        if (!generatingDate) return;
+        if (games.some((g) => g.date === generatingDate)) {
+            setGeneratingDate(null);
+        }
+    }, [games, generatingDate]);
+
+    // Poll while a date is generating; stop after 5 min so we don't spin forever on job failure
+    useEffect(() => {
+        if (!generatingDate) return;
+        const interval = setInterval(() => router.reload(), 4000);
+        const timeout = setTimeout(() => setGeneratingDate(null), 5 * 60 * 1000);
+        return () => {
+            clearInterval(interval);
+            clearTimeout(timeout);
+        };
+    }, [generatingDate]);
 
     const calendarWeeks = useMemo(() => {
         const { year, month } = calendarMonth;
@@ -357,15 +380,37 @@ export default function Games() {
             .finally(() => setEditSaving(false));
     };
 
-    const handleGenerateSubmit = () => {
+    const handleGenerateSubmit = async () => {
         if (!createForm.date) return;
         setGenerateLoading(true);
-        router.post(generateUrl, { date: createForm.date, type: createForm.type }, {
-            preserveScroll: true,
-            onFinish: () => setGenerateLoading(false),
-            onSuccess: () => closeCreateModal(),
-            onError: () => setGenerateLoading(false),
-        });
+        setGenerateError(null);
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        try {
+            const res = await fetch(generateUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ date: createForm.date, type: createForm.type }),
+                credentials: 'include',
+            });
+            const data = (await res.json()) as { dispatched?: boolean; date?: string; message?: string };
+            if (!res.ok) {
+                setGenerateError(data.message ?? 'Generation failed.');
+                return;
+            }
+            if (data.dispatched && data.date) {
+                setGeneratingDate(data.date);
+                closeCreateModal();
+            }
+        } catch {
+            setGenerateError('Request failed.');
+        } finally {
+            setGenerateLoading(false);
+        }
     };
 
     const handleManualAnswerNext = () => {
@@ -469,12 +514,13 @@ export default function Games() {
                                     }
                                     const dateStr = dateStrForCell(day);
                                     const game = gamesByDate.get(dateStr);
+                                    const isGenerating = !game && dateStr === generatingDate;
                                     return (
                                         <div
                                             key={dateStr}
-                                            className={`min-h-[80px] bg-white p-1.5 border-b border-slate-100 last:border-b-0 ${!game ? 'cursor-pointer hover:bg-slate-50' : ''}`}
-                                            onClick={!game ? () => openCreateModal(dateStr) : undefined}
-                                            role={!game ? 'button' : undefined}
+                                            className={`min-h-[80px] bg-white p-1.5 border-b border-slate-100 last:border-b-0 ${!game && !isGenerating ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+                                            onClick={!game && !isGenerating ? () => openCreateModal(dateStr) : undefined}
+                                            role={!game && !isGenerating ? 'button' : undefined}
                                         >
                                             <div className="text-right text-xs text-slate-500 font-body mb-1">
                                                 {day}
@@ -499,6 +545,10 @@ export default function Games() {
                                                             </div>
                                                         )}
                                                     </button>
+                                                </div>
+                                            ) : isGenerating ? (
+                                                <div className="flex items-center justify-center h-10 text-coral">
+                                                    <Loader2 className="h-6 w-6 animate-spin" />
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center justify-center h-10 text-slate-400 text-xs font-body">
@@ -526,12 +576,7 @@ export default function Games() {
                 {/* Create game modal */}
                 <Dialog open={createOpen} onOpenChange={(open) => !open && closeCreateModal()}>
                     <DialogContent className="max-w-md" onClick={(e) => e.stopPropagation()}>
-                        {generateLoading ? (
-                            <div className="flex flex-col items-center justify-center py-12 gap-4">
-                                <Loader2 className="h-12 w-12 animate-spin text-coral" />
-                                <p className="text-slate-600 font-body">Generating game…</p>
-                            </div>
-                        ) : createStep === 'initial' ? (
+                        {createStep === 'initial' ? (
                             <>
                                 <DialogTitle>Create game</DialogTitle>
                                 <DialogDescription>Choose type, date, and how to create the game.</DialogDescription>
@@ -584,6 +629,9 @@ export default function Games() {
                                             </SelectContent>
                                         </Select>
                                     </div>
+                                    {generateError && (
+                                        <p className="text-sm text-red-600 font-body">{generateError}</p>
+                                    )}
                                 </div>
                                 <DialogFooter className="gap-2">
                                     <DialogClose asChild>
@@ -593,9 +641,16 @@ export default function Games() {
                                         <Button
                                             size="sm"
                                             onClick={handleGenerateSubmit}
-                                            disabled={!createForm.date}
+                                            disabled={!createForm.date || generateLoading}
                                         >
-                                            Generate
+                                            {generateLoading ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Dispatching…
+                                                </>
+                                            ) : (
+                                                'Generate'
+                                            )}
                                         </Button>
                                     ) : (
                                         <Button

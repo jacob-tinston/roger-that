@@ -19,11 +19,41 @@ interface GameSettings {
     LOSE_SUB_CAPTIONS: string[];
 }
 
+interface RecentGame {
+    date: string;
+    formatted_date: string;
+    url: string;
+    is_current: boolean;
+    subjects: Array<{ id: number; name: string; photo_url: string | null }>;
+}
+
+interface LeaderboardEntry {
+    rank: number;
+    name: string;
+    attempts: number | null;
+}
+
+interface PlayedResult {
+    success: boolean;
+    answer: {
+        name: string;
+        year: number;
+        tagline: string;
+        photo_url: string | null;
+        citations?: string[];
+    };
+}
+
 interface GamePageProps {
     subjects: Array<{ id: number; name: string; year: number; hint: string; photo_url: string | null }> | null;
     gameDate: string;
     guessUrl: string;
     previousGameUrl: string | null;
+    recentGames: RecentGame[];
+    leaderboard: LeaderboardEntry[];
+    playedResult?: PlayedResult | null;
+    nextUnplayedGameUrl?: string | null;
+    allCaughtUp?: boolean;
     settings: GameSettings;
     noGame?: boolean;
     canonicalUrl?: string;
@@ -32,7 +62,7 @@ interface GamePageProps {
 
 export default function Game() {
     const pageProps = usePage<SharedData>().props as unknown as GamePageProps & SharedData;
-    const { subjects, gameDate, guessUrl, previousGameUrl, settings, noGame, canonicalUrl, appUrl, auth } = pageProps;
+    const { subjects, gameDate, guessUrl, previousGameUrl, recentGames, leaderboard = [], playedResult, nextUnplayedGameUrl, allCaughtUp = false, settings, noGame, canonicalUrl, appUrl, auth } = pageProps;
     const user = auth?.user;
 
     const isToday = gameDate === new Date().toISOString().split('T')[0];
@@ -126,7 +156,7 @@ export default function Game() {
                                         variant="coral"
                                     >
                                         <Link href={register().url}>
-                                         Notify me of the next Rogering
+                                         Notify me
                                         </Link>
                                     </Button>
                                 )}
@@ -148,7 +178,13 @@ export default function Game() {
                         gameDate={gameDate}
                         guessUrl={guessUrl}
                         previousGameUrl={previousGameUrl}
+                        recentGames={recentGames ?? []}
+                        leaderboard={leaderboard}
+                        playedResult={playedResult ?? null}
+                        nextUnplayedGameUrl={nextUnplayedGameUrl ?? null}
+                        allCaughtUp={allCaughtUp}
                         settings={settings}
+                        showNotifyCta={!user}
                     />
                 )}
             </main>

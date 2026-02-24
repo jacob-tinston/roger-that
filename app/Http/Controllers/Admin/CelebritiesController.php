@@ -120,6 +120,7 @@ class CelebritiesController extends Controller
                     'id' => $rel->id,
                     'celebrity_1_id' => $rel->celebrity_1_id,
                     'celebrity_2_id' => $rel->celebrity_2_id,
+                    'citation' => $rel->citation,
                     'other' => [
                         'id' => $rel->celebrity2->id,
                         'name' => $rel->celebrity2->name,
@@ -139,6 +140,7 @@ class CelebritiesController extends Controller
                     'id' => $rel->id,
                     'celebrity_1_id' => $rel->celebrity_1_id,
                     'celebrity_2_id' => $rel->celebrity_2_id,
+                    'citation' => $rel->citation,
                     'other' => [
                         'id' => $rel->celebrity1->id,
                         'name' => $rel->celebrity1->name,

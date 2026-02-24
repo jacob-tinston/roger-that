@@ -35,16 +35,21 @@ return [
         ],
     ],
 
-    'anthropic' => [
-        'api_key' => env('ANTHROPIC_API_KEY'),
-        'model' => env('ANTHROPIC_MODEL', 'claude-haiku-4-5-20251001'),
-    ],
-
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
-        'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+        'model' => env('OPENAI_MODEL'),
+        'image_model' => env('OPENAI_IMAGE_MODEL', 'dall-e-3'),
     ],
 
-    'ai_provider' => env('AI_PROVIDER', 'anthropic'),
+    /*
+    |--------------------------------------------------------------------------
+    | Node.js path for game agent scripts
+    |--------------------------------------------------------------------------
+    | When running game generation from the admin (web), the PHP process may
+    | not have 'node' in PATH. Set NODE_PATH to the full path to node (e.g.
+    | /opt/homebrew/bin/node or /usr/local/bin/node) if you see "command not
+    | found" or script failures only from the admin and not from CLI.
+    */
+    'node_path' => env('NODE_PATH', 'node'),
 
 ];

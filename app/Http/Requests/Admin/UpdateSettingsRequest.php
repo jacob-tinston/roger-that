@@ -23,10 +23,6 @@ class UpdateSettingsRequest extends FormRequest
     {
         return [
             'settings' => ['required', 'array'],
-            'settings.CELEBRITIES_SYSTEM_PROMPT' => ['nullable', 'string'],
-            'settings.CELEBRITIES_USER_PROMPT' => ['nullable', 'string'],
-            'settings.CELEBRITIES_RELATIONSHIPS_SYSTEM_PROMPT' => ['nullable', 'string'],
-            'settings.CELEBRITIES_RELATIONSHIPS_USER_PROMPT' => ['nullable', 'string'],
             'settings.SUBTITLES' => ['nullable', 'array'],
             'settings.REACTIONS' => ['nullable', 'array'],
             'settings.REACTIONS.wrong' => ['nullable', 'array'],

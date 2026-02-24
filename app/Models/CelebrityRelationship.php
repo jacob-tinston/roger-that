@@ -13,6 +13,7 @@ class CelebrityRelationship extends Model
     protected $fillable = [
         'celebrity_1_id',
         'celebrity_2_id',
+        'citation',
     ];
 
     /**

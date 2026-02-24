@@ -1,0 +1,38 @@
+{
+  "answer": {
+    "name": "Leonardo DiCaprio",
+    "birth_year": 1974,
+    "gender": "male",
+    "tagline": "Titantic icon, age-gap reigning champ"
+  },
+  "relationships": [
+    {
+      "name": "Vittoria Ceretti",
+      "birth_year": 1998,
+      "gender": "female",
+      "tagline": "Runway royalty, model cyclone",
+      "citation": "https://people.com/leonardo-dicaprio-girlfriend-vittoria-ceretti-joins-him-premiere-11806180"
+    },
+    {
+      "name": "Gisele Bündchen",
+      "birth_year": 1980,
+      "gender": "female",
+      "tagline": "Brazilian bombshell, catwalk tsunami",
+      "citation": "https://www.the-independent.com/life-style/love-sex/leonardo-dicaprio-girlfriend-age-chart-dating-timeline-b2278716.html"
+    },
+    {
+      "name": "Camila Morrone",
+      "birth_year": 1997,
+      "gender": "female",
+      "tagline": "Silent storm, quietly buzzy",
+      "citation": "https://parade.com/1313995/kaigreen/leonardo-dicaprio-girlfriend-camila-morrone"
+    },
+    {
+      "name": "Toni Garrn",
+      "birth_year": 1992,
+      "gender": "female",
+      "tagline": "German supermodel, breeze through hearts",
+      "citation": "https://www.elle.com.au/elle-style-awards/leonardo-dicaprios-dating-history-12655"
+    }
+  ]
+}

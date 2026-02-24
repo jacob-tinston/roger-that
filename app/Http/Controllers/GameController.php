@@ -6,6 +6,7 @@ use App\Http\Requests\Admin\StoreManualGameRequest;
 use App\Http\Requests\Admin\UpdateGameRequest;
 use App\Jobs\CreateDailyGame;
 use App\Models\Celebrity;
+use App\Models\CelebrityRelationship;
 use App\Models\DailyGame;
 use App\Models\GamesPlayed;
 use App\Models\Setting;
@@ -16,7 +17,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
-use RuntimeException;
 
 class GameController extends Controller
 {
@@ -57,12 +57,15 @@ class GameController extends Controller
                     : null;
 
                 $canonicalUrl = route('game', ['date' => $gameDate->format('Y-m-d')]);
+                $recentGames = self::recentGamesList($gameDate->toDateString(), 5);
 
                 return Inertia::render('game', [
                     'subjects' => null,
                     'gameDate' => $gameDate->toDateString(),
                     'guessUrl' => route('game.guess'),
                     'previousGameUrl' => $previousGameUrl,
+                    'recentGames' => $recentGames,
+                    'leaderboard' => [],
                     'settings' => [],
                     'noGame' => true,
                     'canonicalUrl' => $canonicalUrl,
@@ -102,12 +105,106 @@ class GameController extends Controller
         })->toArray();
 
         $canonicalUrl = route('game', ['date' => $game->game_date->format('Y-m-d')]);
+        $recentGames = self::recentGamesList($game->game_date->toDateString(), 5);
+
+        $leaderboard = GamesPlayed::query()
+            ->where('game_id', $game->id)
+            ->whereNotNull('attempts')
+            ->with('user')
+            ->orderBy('attempts')
+            ->orderBy('created_at')
+            ->limit(5)
+            ->get()
+            ->map(fn (GamesPlayed $play, int $index) => [
+                'rank' => $index + 1,
+                'name' => $play->user?->name ?? 'Anonymous',
+                'attempts' => $play->attempts,
+            ])
+            ->all();
+
+        $fakeNames = [
+            'Jord', 'Anonymous', 'garryb', 'Anonymous', 'Cupid',
+        ];
+        $need = 5 - count($leaderboard);
+        for ($i = 0; $i < $need; $i++) {
+            $rank = count($leaderboard) + 1;
+            $leaderboard[] = [
+                'rank' => $rank,
+                'name' => $fakeNames[$i % count($fakeNames)],
+                'attempts' => $rank,
+            ];
+        }
+
+        $leaderboard = collect($leaderboard)
+            ->sortBy('attempts')
+            ->values()
+            ->map(fn (array $entry, int $index) => array_merge($entry, ['rank' => $index + 1]))
+            ->all();
+
+        if (! auth()->check()) {
+            $leaderboard = array_map(fn (array $entry) => [
+                'rank' => $entry['rank'],
+                'name' => str_repeat("\u{2022}", 10),
+                'attempts' => null,
+            ], $leaderboard);
+        }
+
+        $playedResult = null;
+        $nextUnplayedGameUrl = null;
+        $allCaughtUp = false;
+
+        if (auth()->check()) {
+            $played = GamesPlayed::where('game_id', $game->id)
+                ->where('user_id', auth()->id())
+                ->first();
+
+            if ($played) {
+                $game->load(['answer', 'subjects']);
+                $a = $game->answer;
+                $citations = CelebrityRelationship::query()
+                    ->where('celebrity_1_id', $game->answer_id)
+                    ->whereIn('celebrity_2_id', $game->subjects->pluck('id'))
+                    ->whereNotNull('citation')
+                    ->pluck('citation')
+                    ->unique()
+                    ->values()
+                    ->all();
+
+                $playedResult = [
+                    'success' => $played->success,
+                    'answer' => [
+                        'name' => $a->name,
+                        'year' => $a->birth_year,
+                        'tagline' => $a->tagline ?? '',
+                        'photo_url' => $a->photo_url,
+                        'citations' => $citations,
+                    ],
+                ];
+            }
+
+            $playedGameIds = GamesPlayed::where('user_id', auth()->id())->pluck('game_id')->all();
+            $nextUnplayed = DailyGame::whereDate('game_date', '<=', today())
+                ->orderByDesc('game_date')
+                ->whereNotIn('id', $playedGameIds)
+                ->first();
+
+            if ($nextUnplayed) {
+                $nextUnplayedGameUrl = route('game', ['date' => $nextUnplayed->game_date->format('Y-m-d')]);
+            } else {
+                $allCaughtUp = true;
+            }
+        }
 
         return Inertia::render('game', [
             'subjects' => $subjects->values()->all(),
             'gameDate' => $game->game_date->toDateString(),
             'guessUrl' => route('game.guess'),
             'previousGameUrl' => $previousGameUrl,
+            'recentGames' => $recentGames,
+            'leaderboard' => $leaderboard,
+            'playedResult' => $playedResult,
+            'nextUnplayedGameUrl' => $nextUnplayedGameUrl,
+            'allCaughtUp' => $allCaughtUp,
             'settings' => [
                 'SUBTITLES' => $gameSettings['SUBTITLES'] ?? [],
                 'REACTIONS' => $gameSettings['REACTIONS'] ?? ['wrong' => [], 'close' => []],
@@ -124,6 +221,35 @@ class GameController extends Controller
     }
 
     /**
+     * Recent games list for the game page sidebar (dates on or before today, current date highlighted).
+     * Includes subjects for avatar icons like the history page.
+     *
+     * @return array<int, array{date: string, formatted_date: string, url: string, is_current: bool, subjects: array<int, array{id: int, name: string, photo_url: string|null}>}>
+     */
+    private static function recentGamesList(string $currentGameDate, int $limit = 5): array
+    {
+        return DailyGame::query()
+            ->whereDate('game_date', '<=', today())
+            ->with('subjects')
+            ->orderByDesc('game_date')
+            ->limit($limit)
+            ->get()
+            ->map(fn (DailyGame $g) => [
+                'date' => $g->game_date->format('Y-m-d'),
+                'formatted_date' => $g->game_date->format('F j, Y'),
+                'url' => route('game', ['date' => $g->game_date->format('Y-m-d')]),
+                'is_current' => $g->game_date->format('Y-m-d') === $currentGameDate,
+                'subjects' => $g->subjects->map(fn ($s) => [
+                    'id' => $s->id,
+                    'name' => $s->name,
+                    'photo_url' => $s->photo_url,
+                ])->values()->all(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
      * Check a guess. Answer is only returned when correct or when the game is over (last guess was wrong).
      * Accepts optional game_date for historical games; defaults to today when omitted.
      */
@@ -133,6 +259,7 @@ class GameController extends Controller
             'guess' => 'required|string|max:255',
             'is_last_guess' => 'sometimes|boolean',
             'game_date' => 'sometimes|date|before_or_equal:today',
+            'attempt_number' => 'sometimes|integer|min:1|max:5',
         ]);
 
         $gameDate = isset($valid['game_date'])
@@ -140,33 +267,48 @@ class GameController extends Controller
             : today();
 
         $game = DailyGame::whereDate('game_date', $gameDate)
-            ->with('answer')
+            ->with(['answer', 'subjects'])
             ->first();
 
         if (! $game || ! $game->answer) {
             return response()->json(['error' => 'No game or answer for this date'], 404);
         }
 
-        $guess = trim($valid['guess']);
-        $answerName = trim($game->answer->name);
+        if (auth()->check() && GamesPlayed::where('game_id', $game->id)->where('user_id', auth()->id())->exists()) {
+            return response()->json(['error' => 'You have already played this game.'], 422);
+        }
+
+        $guess = self::normalizeNameForComparison($valid['guess']);
+        $answerName = self::normalizeNameForComparison($game->answer->name);
         $correct = $answerName !== '' && strcasecmp($guess, $answerName) === 0;
         $gameOver = (bool) ($valid['is_last_guess'] ?? false) && ! $correct;
 
         $payload = ['correct' => $correct];
         if ($correct || $gameOver) {
             $a = $game->answer;
+            $citations = CelebrityRelationship::query()
+                ->where('celebrity_1_id', $game->answer_id)
+                ->whereIn('celebrity_2_id', $game->subjects->pluck('id'))
+                ->whereNotNull('citation')
+                ->pluck('citation')
+                ->unique()
+                ->values()
+                ->all();
+
             $payload['answer'] = [
                 'name' => $a->name,
                 'year' => $a->birth_year,
                 'tagline' => $a->tagline ?? '',
                 'photo_url' => $a->photo_url,
+                'citations' => $citations,
             ];
 
-            // Track the game as played
+            // Track the game as played (attempt_number is 1-based: 1 = first guess, 5 = fifth/last)
             GamesPlayed::create([
                 'game_id' => $game->id,
                 'user_id' => auth()->id(),
                 'success' => $correct,
+                'attempts' => isset($valid['attempt_number']) ? (int) $valid['attempt_number'] : null,
             ]);
         }
         if ($gameOver) {
@@ -174,6 +316,26 @@ class GameController extends Controller
         }
 
         return response()->json($payload);
+    }
+
+    /**
+     * Normalize a name for comparison: trim, Unicode NFC, collapse internal spaces.
+     * Reduces false negatives from pasted text, different encodings, or extra spaces.
+     */
+    private static function normalizeNameForComparison(string $value): string
+    {
+        $trimmed = trim($value);
+        if ($trimmed === '') {
+            return '';
+        }
+        $normalized = \Normalizer::isNormalized($trimmed, \Normalizer::FORM_C)
+            ? $trimmed
+            : \Normalizer::normalize($trimmed, \Normalizer::FORM_C);
+        if ($normalized === false) {
+            $normalized = $trimmed;
+        }
+
+        return preg_replace('/\s+/u', ' ', $normalized);
     }
 
     /**
@@ -320,9 +482,9 @@ class GameController extends Controller
     }
 
     /**
-     * Generate a daily game via AI for the given date. Runs synchronously.
+     * Dispatch daily game generation to the queue. Returns immediately; admin UI polls for the game to appear.
      */
-    public function generate(Request $request): RedirectResponse
+    public function generate(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'date' => ['required', 'date', 'before_or_equal:today'],
@@ -332,15 +494,16 @@ class GameController extends Controller
         $gameDate = Carbon::parse($validated['date'])->startOfDay();
         $type = $validated['type'] ?? 'celebrity_sh*ggers';
 
-        try {
-            (new CreateDailyGame($gameDate, $type))->handle();
-        } catch (RuntimeException $e) {
-            return redirect()->route('admin.games.index')
-                ->with('error', 'Generation failed: '.$e->getMessage());
+        if (DailyGame::whereDate('game_date', $gameDate->toDateString())->exists()) {
+            return response()->json(['message' => 'Game already exists for this date.'], 422);
         }
 
-        return redirect()->route('admin.games.index')
-            ->with('success', 'Game for '.$gameDate->format('F j, Y').' created successfully.');
+        CreateDailyGame::dispatch($gameDate, $type);
+
+        return response()->json([
+            'dispatched' => true,
+            'date' => $gameDate->toDateString(),
+        ]);
     }
 
     /**

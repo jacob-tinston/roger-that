@@ -1,27 +1,97 @@
 import { Link, usePage } from '@inertiajs/react';
-import { User } from 'lucide-react';
+import { Bell, Flame, Trophy, User } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { logout } from '@/routes';
-import { login } from '@/routes';
+import { login, logout, register } from '@/routes';
 import { type SharedData } from '@/types';
 
-export function AccountButton() {
+interface AccountButtonProps {
+    signUpOpen?: boolean;
+    onSignUpOpenChange?: (open: boolean) => void;
+}
+
+export function AccountButton({ signUpOpen, onSignUpOpenChange }: AccountButtonProps = {}) {
     const { auth } = usePage<SharedData>().props;
     const user = auth?.user;
     const [showAccount, setShowAccount] = useState(false);
+    const [internalSignUp, setInternalSignUp] = useState(false);
+
+    const signUpControlled = signUpOpen !== undefined && onSignUpOpenChange !== undefined;
+    const showSignUp = signUpControlled ? signUpOpen : internalSignUp;
+    const setShowSignUp = signUpControlled ? onSignUpOpenChange : setInternalSignUp;
 
     if (!user) {
         return (
-            <Link
-                href={login().url}
-                className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
-                aria-label="Log In"
-            >
-                <User className="w-5 h-5" />
-            </Link>
+            <>
+                <button
+                    type="button"
+                    onClick={() => setShowSignUp(true)}
+                    className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
+                    aria-label="Account / Sign up"
+                >
+                    <User className="w-5 h-5" />
+                </button>
+
+                <Dialog open={showSignUp} onOpenChange={setShowSignUp}>
+                    <DialogContent className="sm:max-w-lg bg-white rounded-3xl p-8 md:p-10 border-slate-200 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]">
+                        <DialogHeader>
+                            <DialogTitle className="font-display text-2xl md:text-3xl font-black text-slate-900 tracking-tight text-center">
+                                Join the chaos
+                            </DialogTitle>
+                            <DialogDescription asChild>
+                                <div className="mt-4 space-y-6 text-left">
+                                    <p className="text-slate-600 font-body text-sm md:text-base leading-relaxed">
+                                        Sign up to track your wins, get notified when the next scandal drops, and prove you've got the tabloid instincts to spot who's been rogering around the headlines.
+                                    </p>
+                                    <div className="grid gap-4">
+                                        <div className="flex gap-4 items-start rounded-xl bg-slate-50/80 p-4">
+                                            <div className="shrink-0 w-10 h-10 rounded-full bg-coral/10 flex items-center justify-center">
+                                                <Flame className="w-5 h-5 text-coral" />
+                                            </div>
+                                            <div>
+                                                <p className="font-display font-semibold text-slate-900 text-sm">Build your streak</p>
+                                                <p className="text-slate-600 font-body text-sm mt-0.5">Play every day and keep the momentum going.</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-4 items-start rounded-xl bg-slate-50/80 p-4">
+                                            <div className="shrink-0 w-10 h-10 rounded-full bg-coral/10 flex items-center justify-center">
+                                                <Bell className="w-5 h-5 text-coral" />
+                                            </div>
+                                            <div>
+                                                <p className="font-display font-semibold text-slate-900 text-sm">Never miss a game</p>
+                                                <p className="text-slate-600 font-body text-sm mt-0.5">Get a nudge when the new scandal drops.</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-4 items-start rounded-xl bg-slate-50/80 p-4">
+                                            <div className="shrink-0 w-10 h-10 rounded-full bg-coral/10 flex items-center justify-center">
+                                                <Trophy className="w-5 h-5 text-coral" />
+                                            </div>
+                                            <div>
+                                                <p className="font-display font-semibold text-slate-900 text-sm">Bragging rights</p>
+                                                <p className="text-slate-600 font-body text-sm mt-0.5">See your past games and show off your instincts.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col gap-3 pt-2">
+                                        <Button variant="coral" asChild>
+                                            <Link href={register().url}>
+                                                Sign up
+                                            </Link>
+                                        </Button>
+                                        <Button variant="secondary" asChild>
+                                            <Link href={login().url}>
+                                                Log in
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </div>
+                            </DialogDescription>
+                        </DialogHeader>
+                    </DialogContent>
+                </Dialog>
+            </>
         );
     }
 
