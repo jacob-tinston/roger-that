@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { Pencil, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -55,10 +55,11 @@ interface ShowPageProps {
     celebrity: CelebrityData;
     relationships: Relationship[];
     celebritiesSearchUrl: string;
+    regenerateImageUrl: string;
 }
 
 export default function CelebrityShow() {
-    const { celebrity, relationships, celebritiesSearchUrl } = usePage<ShowPageProps>().props;
+    const { celebrity, relationships, celebritiesSearchUrl, regenerateImageUrl } = usePage<ShowPageProps>().props;
     const [addOpen, setAddOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<OtherCelebrity[]>([]);
@@ -66,6 +67,7 @@ export default function CelebrityShow() {
     const [addSubmitting, setAddSubmitting] = useState(false);
     const [deletingRelId, setDeletingRelId] = useState<number | null>(null);
     const [deletingCelebrity, setDeletingCelebrity] = useState(false);
+    const [regeneratingImage, setRegeneratingImage] = useState(false);
 
     const searchCelebrities = useCallback(async () => {
         const params = new URLSearchParams({ exclude: String(celebrity.id) });
@@ -129,6 +131,13 @@ export default function CelebrityShow() {
         });
     };
 
+    const handleRegenerateImage = () => {
+        setRegeneratingImage(true);
+        router.post(regenerateImageUrl, {}, {
+            onFinish: () => setRegeneratingImage(false),
+        });
+    };
+
     const getInitials = (name: string) =>
         name
             .split(' ')
@@ -145,26 +154,40 @@ export default function CelebrityShow() {
             <AdminLayout title={celebrity.name} description="View and manage relationships">
                 <div className="space-y-8">
                     <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="flex items-center gap-4">
-                            {celebrity.photo_url ? (
-                                <img
-                                    src={celebrity.photo_url}
-                                    alt={celebrity.name}
-                                    className="h-20 w-20 rounded-full object-cover object-top"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                        const n = e.currentTarget.nextElementSibling;
-                                        if (n) (n as HTMLElement).style.display = 'flex';
-                                    }}
-                                />
-                            ) : null}
-                            <div
-                                className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-200 to-slate-300"
-                                style={celebrity.photo_url ? { display: 'none' } : undefined}
-                            >
-                                <span className="text-2xl font-bold text-slate-600 font-display">
-                                    {getInitials(celebrity.name)}
-                                </span>
+                        <div className="flex items-start gap-6">
+                            <div className="flex flex-col items-center gap-2">
+                                <div className="relative h-40 w-40 shrink-0 sm:h-52 sm:w-52">
+                                    {celebrity.photo_url ? (
+                                        <img
+                                            src={celebrity.photo_url}
+                                            alt={celebrity.name}
+                                            className="h-full w-full rounded-2xl object-cover object-top shadow-md"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                                const n = e.currentTarget.nextElementSibling;
+                                                if (n) (n as HTMLElement).style.display = 'flex';
+                                            }}
+                                        />
+                                    ) : null}
+                                    <div
+                                        className="flex h-full w-full items-center justify-center rounded-2xl bg-gradient-to-br from-slate-200 to-slate-300 shadow-md"
+                                        style={celebrity.photo_url ? { display: 'none' } : undefined}
+                                    >
+                                        <span className="text-5xl font-bold text-slate-600 font-display sm:text-6xl">
+                                            {getInitials(celebrity.name)}
+                                        </span>
+                                    </div>
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full text-xs"
+                                    onClick={handleRegenerateImage}
+                                    disabled={regeneratingImage}
+                                >
+                                    <RefreshCw className={`mr-1.5 h-3 w-3 ${regeneratingImage ? 'animate-spin' : ''}`} />
+                                    {regeneratingImage ? 'Queued…' : 'Regenerate image'}
+                                </Button>
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold text-slate-900 font-display">{celebrity.name}</h2>

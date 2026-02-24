@@ -28,6 +28,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     Route::get('admin/celebrities-search', [\App\Http\Controllers\Admin\CelebritiesController::class, 'search'])->name('admin.celebrities.search');
     Route::get('admin/celebrities/{celebrity}/relationships', [\App\Http\Controllers\Admin\CelebritiesController::class, 'relationships'])->name('admin.celebrities.relationships.index');
+    Route::post('admin/celebrities/{celebrity}/regenerate-image', [\App\Http\Controllers\Admin\CelebritiesController::class, 'regenerateImage'])->name('admin.celebrities.regenerate-image');
     Route::resource('admin/celebrities', \App\Http\Controllers\Admin\CelebritiesController::class)->parameters(['celebrities' => 'celebrity'])->names('admin.celebrities');
     Route::post('admin/celebrities/relationships', [\App\Http\Controllers\Admin\CelebrityRelationshipsController::class, 'store'])->name('admin.celebrities.relationships.store');
     Route::put('admin/celebrities/relationships/{celebrity_relationship}', [\App\Http\Controllers\Admin\CelebrityRelationshipsController::class, 'update'])->name('admin.celebrities.relationships.update');

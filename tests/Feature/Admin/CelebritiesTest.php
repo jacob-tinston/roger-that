@@ -1,9 +1,11 @@
 <?php
 
+use App\Jobs\RegenerateCelebrityImage;
 use App\Models\Celebrity;
 use App\Models\CelebrityRelationship;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Support\Facades\Queue;
 
 beforeEach(function (): void {
     Role::create(['name' => 'Admin']);
@@ -51,6 +53,7 @@ test('admin can view a celebrity show page with relationships', function (): voi
         ->where('celebrity.id', $celebrity->id)
         ->has('relationships')
         ->has('celebritiesSearchUrl')
+        ->has('regenerateImageUrl')
     );
 });
 
@@ -118,6 +121,17 @@ test('non-admin cannot access celebrities index', function (): void {
     $user = User::factory()->create(['role_id' => 2]);
 
     $this->actingAs($user)->get(route('admin.celebrities.index'))->assertRedirect(route('home'));
+});
+
+test('admin can queue celebrity image regeneration', function (): void {
+    Queue::fake();
+    $celebrity = Celebrity::factory()->create();
+
+    $response = $this->actingAs($this->admin)->post(route('admin.celebrities.regenerate-image', $celebrity));
+
+    $response->assertRedirect(route('admin.celebrities.show', $celebrity));
+    $response->assertSessionHas('success');
+    Queue::assertPushed(RegenerateCelebrityImage::class);
 });
 
 test('admin can search celebrities for relationship dropdown', function (): void {

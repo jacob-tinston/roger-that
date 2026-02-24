@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCelebrityRequest;
 use App\Http\Requests\Admin\UpdateCelebrityRequest;
+use App\Jobs\RegenerateCelebrityImage;
 use App\Models\Celebrity;
 use App\Models\CelebrityRelationship;
 use Illuminate\Http\JsonResponse;
@@ -164,6 +165,7 @@ class CelebritiesController extends Controller
             ],
             'relationships' => $relationships,
             'celebritiesSearchUrl' => route('admin.celebrities.search'),
+            'regenerateImageUrl' => route('admin.celebrities.regenerate-image', $celebrity),
         ]);
     }
 
@@ -206,5 +208,17 @@ class CelebritiesController extends Controller
         $celebrity->delete();
 
         return redirect()->route('admin.celebrities.index')->with('success', 'Celebrity deleted successfully.');
+    }
+
+    /**
+     * Queue regeneration of the celebrity's caricature image.
+     */
+    public function regenerateImage(Celebrity $celebrity): RedirectResponse
+    {
+        RegenerateCelebrityImage::dispatch($celebrity);
+
+        return redirect()
+            ->route('admin.celebrities.show', $celebrity)
+            ->with('success', 'Image regeneration queued. The photo will update when the job completes.');
     }
 }
