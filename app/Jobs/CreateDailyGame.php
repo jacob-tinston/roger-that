@@ -11,6 +11,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\URL;
 use RuntimeException;
 
 class CreateDailyGame implements ShouldQueue
@@ -131,7 +132,12 @@ class CreateDailyGame implements ShouldQueue
             ->values();
 
         if ($celebritiesNeedingPhotos->isNotEmpty()) {
-            app(CelebrityImageService::class)->generateImagesForCelebrities($celebritiesNeedingPhotos, false);
+            $savedPaths = app(CelebrityImageService::class)->generateImagesForCelebrities($celebritiesNeedingPhotos, false);
+            foreach ($savedPaths as $celebrityId => $relativePath) {
+                Celebrity::where('id', $celebrityId)->update([
+                    'photo_url' => URL::asset('storage/'.$relativePath),
+                ]);
+            }
         }
 
         $game = DailyGame::create([

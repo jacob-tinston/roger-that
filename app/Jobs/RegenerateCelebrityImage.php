@@ -7,6 +7,7 @@ use App\Services\CelebrityImageService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 
 class RegenerateCelebrityImage implements ShouldQueue
 {
@@ -36,15 +37,13 @@ class RegenerateCelebrityImage implements ShouldQueue
             return;
         }
 
-        $service->generateImagesForCelebrities(collect([$celebrity]), true);
+        $savedPaths = $service->generateImagesForCelebrities(collect([$celebrity]), true);
 
-        $celebrity->refresh();
-        if ($celebrity->photo_url !== null) {
-            $baseUrl = str_contains($celebrity->photo_url, '?')
-                ? explode('?', $celebrity->photo_url, 2)[0]
-                : $celebrity->photo_url;
-            $celebrity->update(['photo_url' => $baseUrl.'?v='.time()]);
-            Log::info('RegenerateCelebrityImage: Image updated (with cache-bust).', ['name' => $celebrity->name]);
+        if (isset($savedPaths[$celebrity->id])) {
+            $relativePath = $savedPaths[$celebrity->id];
+            $photoUrl = URL::asset('storage/'.$relativePath).'?v='.time();
+            $celebrity->update(['photo_url' => $photoUrl]);
+            Log::info('RegenerateCelebrityImage: Image updated from saved output.', ['name' => $celebrity->name, 'path' => $relativePath]);
         } else {
             Log::warning('RegenerateCelebrityImage: No image could be generated or fetched after retries and Wikipedia fallback.', ['name' => $celebrity->name]);
         }

@@ -7,7 +7,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
 class CelebrityImageService
@@ -18,23 +17,38 @@ class CelebrityImageService
      * Generate images for the given celebrities using the caricature script with retries,
      * then Wikipedia fallback for any still missing. Optionally force regeneration by
      * deleting existing image files first.
+     *
+     * Returns a map of celebrity id => relative path (e.g. celebrities/slug.png or celebrities/slug.jpg)
+     * for each celebrity that got an image saved. The caller should update each celebrity's
+     * photo_url from this output path so the correct file (and extension) is used.
+     *
+     * @return array<int, string> celebrity id => relative path of saved image
      */
-    public function generateImagesForCelebrities(Collection $celebrities, bool $forceRegenerate = false): void
+    public function generateImagesForCelebrities(Collection $celebrities, bool $forceRegenerate = false): array
     {
+        $savedPaths = [];
+
         if ($celebrities->isEmpty()) {
-            return;
+            return $savedPaths;
         }
 
         $outputDir = storage_path('app/public/celebrities');
         $node = config('services.node_path', 'node');
+        $celebrityMap = $celebrities->keyBy(fn (Celebrity $c) => $c->name.'|'.($c->birth_year));
 
         if ($forceRegenerate) {
+            $extensions = ['png', 'jpg', 'jpeg', 'webp'];
             foreach ($celebrities as $celebrity) {
                 $slug = Str::slug($celebrity->name);
-                $path = $outputDir.DIRECTORY_SEPARATOR.$slug.'.png';
-                if (is_file($path)) {
-                    unlink($path);
-                    Log::info('CelebrityImageService: Deleted existing image for regenerate.', ['name' => $celebrity->name]);
+                foreach ($extensions as $ext) {
+                    $path = $outputDir.DIRECTORY_SEPARATOR.$slug.'.'.$ext;
+                    if (is_file($path)) {
+                        unlink($path);
+                        Log::info('CelebrityImageService: Deleted existing image for regenerate.', [
+                            'name' => $celebrity->name,
+                            'extension' => $ext,
+                        ]);
+                    }
                 }
             }
         }
@@ -71,10 +85,11 @@ class CelebrityImageService
                 if (empty($item['name']) || ! isset($item['birth_year'], $item['path'])) {
                     continue;
                 }
-                $photoUrl = URL::asset('storage/'.$item['path']);
-                Celebrity::where('name', $item['name'])
-                    ->where('birth_year', (int) $item['birth_year'])
-                    ->update(['photo_url' => $photoUrl]);
+                $key = $item['name'].'|'.((int) $item['birth_year']);
+                $celebrity = $celebrityMap->get($key);
+                if ($celebrity !== null) {
+                    $savedPaths[$celebrity->id] = $item['path'];
+                }
             }
 
             if ($isRetry) {
@@ -101,7 +116,6 @@ class CelebrityImageService
                 break;
             }
 
-            $celebrityMap = $celebrities->keyBy(fn (Celebrity $c) => $c->name.'|'.($c->birth_year));
             $pending = array_map(function (array $f) use ($celebrityMap) {
                 $key = ($f['name'] ?? '').'|'.($f['birth_year'] ?? 0);
                 $celebrity = $celebrityMap->get($key);
@@ -123,10 +137,8 @@ class CelebrityImageService
             Log::warning('CelebrityImageService: Caricature script exited with error (partial results may have been applied).');
         }
 
-        $celebrityIds = $celebrities->pluck('id');
-        $stillMissingPhotos = Celebrity::whereIn('id', $celebrityIds)
-            ->whereNull('photo_url')
-            ->get();
+        $stillMissingIds = $celebrities->pluck('id')->diff(array_keys($savedPaths))->values()->all();
+        $stillMissingPhotos = $celebrities->filter(fn (Celebrity $c) => in_array($c->id, $stillMissingIds, true));
 
         if ($stillMissingPhotos->isNotEmpty()) {
             Log::info('CelebrityImageService: Wikipedia fallback for celebrities without generated images.', [
@@ -136,14 +148,15 @@ class CelebrityImageService
             foreach ($stillMissingPhotos as $celebrity) {
                 $path = $this->fetchWikipediaImage($celebrity->name, (int) $celebrity->birth_year, $outputDir);
                 if ($path !== null) {
-                    $photoUrl = URL::asset('storage/'.$path);
-                    $celebrity->update(['photo_url' => $photoUrl]);
-                    Log::info('CelebrityImageService: Wikipedia image applied.', ['name' => $celebrity->name]);
+                    $savedPaths[$celebrity->id] = $path;
+                    Log::info('CelebrityImageService: Wikipedia image saved.', ['name' => $celebrity->name, 'path' => $path]);
                 } else {
                     Log::warning('CelebrityImageService: Wikipedia image not found.', ['name' => $celebrity->name]);
                 }
             }
         }
+
+        return $savedPaths;
     }
 
     /**
